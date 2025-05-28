@@ -5,7 +5,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233B82F6'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E" type="image/svg+xml">
     <style>
         /* Custom styles for the Inter font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -61,7 +61,88 @@
     let isAnonymousUser = false; // Flag for anonymous access
     let userEmail = null; // Store the email if authenticated via specific email
 
-    // Data for download items (remains unchanged)
+    /**
+     * Darkens a given hex color by a specified percentage.
+     * @param {string} hex - The hex color string (e.g., "#RRGGBB").
+     * @param {number} percent - The percentage to darken (e.g., 10 for 10%).
+     * @returns {string} The darkened hex color string.
+     */
+    function darkenColor(hex, percent) {
+        let f = parseInt(hex.slice(1), 16),
+            t = percent < 0 ? 0 : 255,
+            p = percent < 0 ? percent * -1 : percent,
+            R = f >> 16,
+            G = (f >> 8) & 0x00ff,
+            B = f & 0x0000ff;
+        return (
+            "#" +
+            (
+                0x1000000 +
+                (Math.round((t - R) * p) + R) * 0x10000 +
+                (Math.round((t - G) * p) + G) * 0x100 +
+                (Math.round((t - B) * p) + B)
+            )
+            .toString(16)
+            .slice(1)
+        );
+    }
+
+    /**
+     * Generates an SVG icon displaying a file extension.
+     * @param {string} extension - The file extension to display (e.g., "PDF", "DOC").
+     * @param {string} colorClass - Tailwind CSS class for color (e.g., "text-red-500").
+     * @returns {string} The SVG string for the icon.
+     */
+    function createFileExtensionIcon(extension, colorClass) {
+        // Map Tailwind color class to a hex fill color for the SVG background
+        let fillColor = '#6B7280'; // Default gray
+        switch (colorClass) {
+            case 'text-red-500': fillColor = '#EF4444'; break; // Red
+            case 'text-yellow-500': fillColor = '#F59E0B'; break; // Yellow
+            case 'text-orange-500': fillColor = '#F97316'; break; // Orange
+            case 'text-blue-500': fillColor = '#3B82F6'; break; // Blue
+            case 'text-green-500': fillColor = '#22C55E'; break; // Green
+            case 'text-teal-500': fillColor = '#14B8A6'; break; // Teal
+            case 'text-purple-500': fillColor = '#A855F7'; break; // Purple
+            case 'text-indigo-500': fillColor = '#6366F1'; break; // Indigo (for Apps)
+            case 'text-pink-500': fillColor = '#EC4899'; break; // Pink (for Games)
+            default: fillColor = '#6B7280'; // Default gray
+        }
+
+        const foldedCornerColor = darkenColor(fillColor, 0.15); // Darken by 15%
+
+        // Adjust font size and vertical position based on extension length
+        let fontSize = '8px';
+        let yOffset = '15'; // Base Y position for text
+
+        if (extension.length === 3) {
+            fontSize = '7.5px';
+            yOffset = '14.8';
+        } else if (extension.length === 4) {
+            fontSize = '6.5px';
+            yOffset = '14.5';
+        } else if (extension.length >= 5) {
+            fontSize = '5.5px';
+            yOffset = '14.2';
+        }
+
+        // The SVG structure for a file icon with text
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="w-12 h-12">
+                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7L15 2Z" fill="${fillColor}" filter="url(#shadow)"/>
+                    <path d="M14 2v4a2 2 0 0 0 2 2h4L14 2Z" fill="${foldedCornerColor}"/>
+                    <text x="12" y="${yOffset}" text-anchor="middle" font-size="${fontSize}" fill="white" font-family="sans-serif" font-weight="500">${extension.toUpperCase()}</text>
+                    <defs>
+                        <filter id="shadow">
+                            <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.2)"/>
+                        </filter>
+                    </defs>
+                </svg>`;
+
+        console.log(`Generated SVG for ${extension}: fillColor=${fillColor}, foldedCornerColor=${foldedCornerColor}`);
+        return svgString;
+    }
+
+    // Data for download items
     const downloadItems = [
         // FILES
         {
@@ -70,7 +151,6 @@
             description: 'Virtual machine disk image for AmosOS.',
             version: 'VMDK',
             size: '500 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://www.mediafire.com/file/xnpr80v57dgafce/AmogOS-x86_64-1.5.0.vmdk/file',
             category: 'Files',
         },
@@ -80,7 +160,6 @@
             description: 'Drivers for Asus Eee PC p701 4g model.',
             version: 'Latest',
             size: '150 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-yellow-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
             link: 'https://www.mediafire.com/file/gru8ytwow6e29st/Asus_Eee_PC_p701_4g_surf.rar/file',
             category: 'Files',
         },
@@ -90,7 +169,6 @@
             description: 'Torrent file for a legacy iOS app archive.',
             version: 'Torrent',
             size: '10 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://www.mediafire.com/file/q7xd2j5grfcjdf7/legacyiosapparchive-archive.torrent/file',
             category: 'Files',
         },
@@ -100,7 +178,6 @@
             description: 'ISO image for PearOS Monterey x64 operating system.',
             version: 'x64',
             size: '4.5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://www.mediafire.com/file/5whk0hdpzha9a70/pearOS_Monterey.iso/file',
             category: 'Files',
         },
@@ -110,7 +187,6 @@
             description: 'Lightweight version of Windows 10 for x64 systems.',
             version: 'x64',
             size: '2.5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Tiny-10-x64.iso',
             category: 'Files',
         },
@@ -120,7 +196,6 @@
             description: 'Installation media for Windows 8.1 x64.',
             version: 'x64',
             size: '3.5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-8.1-x64.iso',
             category: 'Files',
         },
@@ -130,7 +205,6 @@
             description: 'Service Pack 1 for Windows 7 Ultimate.',
             version: 'SP1',
             size: '3 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-7-Ultimate-sp1.iso',
             category: 'Files',
         },
@@ -140,7 +214,6 @@
             description: 'Original Service Release 2 for Windows 95.',
             version: 'OSR2',
             size: '200 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-95-OSR2.iso',
             category: 'Files',
         },
@@ -150,7 +223,6 @@
             description: 'Installation media for Windows Vista Ultimate x64.',
             version: 'x64',
             size: '4 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-Vista-Ultimate-x64.iso',
             category: 'Files',
         },
@@ -160,7 +232,6 @@
             description: 'Installation media for Windows 10 x64.',
             version: 'x64',
             size: '5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-10-x64.iso',
             category: 'Files',
         },
@@ -170,7 +241,6 @@
             description: 'Installation media for Windows Millennium Edition.',
             version: 'ME',
             size: '300 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-ME.iso',
             category: 'Files',
         },
@@ -180,7 +250,6 @@
             description: 'Installation media for Windows XP.',
             version: 'XP',
             size: '600 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-XP.iso',
             category: 'Files',
         },
@@ -190,7 +259,6 @@
             description: 'Service Pack 2 for all x86 versions of Windows Vista.',
             version: 'SP2 x86',
             size: '800 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-Vista-SP2-All-Versions-x86.iso',
             category: 'Files',
         },
@@ -200,7 +268,6 @@
             description: 'Dell OEM version of Windows Vista HomePremium.',
             version: 'Build 6000 (SP0) x82',
             size: '3.8 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Dell-OEM-Windows-Vista-HomePremium-Build-6000-x86.iso',
             category: 'Files',
         },
@@ -210,7 +277,6 @@
             description: 'Service Pack 2 for Windows Vista Ultimate x86.',
             version: 'SP2 x86',
             size: '4.2 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-Vista-Ultimate-SP2-X86.iso',
             category: 'Files',
         },
@@ -220,7 +286,6 @@
             description: 'Service Pack 3 for Windows XP Professional x86.',
             version: 'SP3 x86',
             size: '700 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Windows-XP-Professional-SP3-x86.iso',
             category: 'Files',
         },
@@ -230,7 +295,6 @@
             description: 'A collection of Interlop Tools.',
             version: 'All',
             size: '50 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-yellow-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
             link: 'https://example.com/downloads/Interlop-Tools-all.zip',
             category: 'Files',
         },
@@ -240,7 +304,6 @@
             description: 'Installer for Microsoft applications.',
             version: 'Latest',
             size: '10 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
             link: 'https://example.com/downloads/Microsoft-App-Installer.exe',
             category: 'Files',
         },
@@ -250,7 +313,6 @@
             description: 'Continuum CAB files for Windows devices.',
             version: 'Latest',
             size: '200 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Continuum-Cabs.zip',
             category: 'Files',
         },
@@ -260,7 +322,6 @@
             description: 'Utility tools for various purposes.',
             version: 'Latest',
             size: '5 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-yellow-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
             link: 'https://example.com/downloads/Iutools.zip',
             category: 'Files',
         },
@@ -270,7 +331,6 @@
             description: 'Default ringtone from Microsoft Lumia phones.',
             version: 'MP3',
             size: '1 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-red-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Microsoft-Lumia-Default-Ringtone.mp3',
             category: 'Files',
         },
@@ -280,8 +340,7 @@
             description: 'Windows Subsystem for Android (WSA) package with GApps.',
             version: '2407.40000.0.0',
             size: '1.2 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
-            link: 'https://example.com/downloads/WSA_2407.40000.0.0_x64_Release-Nightly-GApps-13.0-NoAmazon.zip',
+            link: 'https://www.mediafire.com/file/r0v4h1mh15wz40u/WSA_2407.40000.0.0_x64_Release-Nightly-GApps-13.0-NoAmazon.rar/file', // Updated link
             category: 'Files',
         },
         // APPS
@@ -291,7 +350,6 @@
             description: 'Official tool to recover and reset your Windows device.',
             version: 'Latest',
             size: '50 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-indigo-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>`,
             link: 'https://www.mediafire.com/file/p1ntrhacznnzruu/WindowsDeviceRecoveryToolInstaller%25282%2529.exe/file',
             category: 'Apps',
         },
@@ -301,7 +359,6 @@
             description: 'Advanced tool for Windows Phone customization and unlocking.',
             version: 'Latest',
             size: '30 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-indigo-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>`,
             link: 'https://www.mediafire.com/file/pegzjbhdz161ula/WPinternals_2.8.zip/file',
             category: 'Apps',
         },
@@ -311,7 +368,6 @@
             description: 'Utility for updating Over-the-Cable devices.',
             version: 'Latest',
             size: '10 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
             link: 'https://www.mediafire.com/file/ovmuvd848qxjnwy/otcupdater.zip/file',
             category: 'Apps',
         },
@@ -321,7 +377,6 @@
             description: 'A patcher for Adobe products.',
             version: '2.7',
             size: '5 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-purple-500"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`,
             link: 'https://example.com/downloads/Adobe-Gen-P.zip',
             category: 'Apps',
         },
@@ -331,8 +386,7 @@
             description: 'Industry-standard benchmark for CPU performance.',
             version: 'R23',
             size: '300 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
-            link: 'https://www.mediafire.com/file/tcnf6rjlwq5j30e/CinebenchR23.zip/file',
+            link: 'https://example.com/downloads/Cinebench-R23.zip', // Reverted link
             category: 'Apps',
         },
         {
@@ -341,7 +395,6 @@
             description: 'Comprehensive suite of productivity applications from Microsoft.',
             version: '2010',
             size: '1.5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-green-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://www.mediafire.com/file/wtkrrrx41nw9czb/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO/file',
             category: 'Apps',
         },
@@ -351,7 +404,6 @@
             description: 'Tool for deploying XAP files to Windows Phone devices.',
             version: '2.0',
             size: '2 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-indigo-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>`,
             link: 'https://example.com/downloads/WPV-XAP-Deployer-2.0.zip',
             category: 'Apps',
         },
@@ -361,7 +413,6 @@
             description: 'The industry-standard image editing software.',
             version: '2023',
             size: '3 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-purple-500"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`,
             link: 'https://example.com/downloads/Adobe-Photoshop-2023.zip',
             category: 'Apps',
         },
@@ -371,7 +422,6 @@
             description: 'Older version of Microsoft Office suite for productivity.',
             version: '2007',
             size: '800 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-green-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             link: 'https://example.com/downloads/Microsoft-Office-Professional-Plus-2007.iso',
             category: 'Apps',
         },
@@ -381,8 +431,7 @@
             description: 'Software for TV tuner cards, enabling TV viewing and recording.',
             version: 'Latest',
             size: '100 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
-            link: 'https://example.com/downloads/WinFast-PVR2.rar',
+            link: 'https://www.mediafire.com/file/k67auoggsks4593/WinFast_PVR2.rar/file', // Updated link
             category: 'Apps',
         },
         {
@@ -391,8 +440,7 @@
             description: 'A versatile media player with advanced features.',
             version: '2.77.1092',
             size: '20 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
-            link: 'https://example.com/downloads/BS.Player-PRO.rar',
+            link: 'https://www.mediafire.com/file/ter3b1x2adkse58/BS.Player_PRO_2.77.1092.rar/file', // Updated link
             category: 'Apps',
         },
         {
@@ -401,8 +449,7 @@
             description: 'Powerful video converter for various formats.',
             version: '22.4.0',
             size: '60 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
-            link: 'https://example.com/downloads/Movavi-Video-Converter.rar',
+            link: 'https://www.mediafire.com/file/ypkvosarq80uxjl/Movavi_Video_Converter_22.4.0_Premium_RePack_%2528%2526_Portable%2529_by_TryRooM.rar/file', // Updated link
             category: 'Apps',
         },
         {
@@ -411,8 +458,7 @@
             description: 'Utility for upscaling games and applications with minimal quality loss.',
             version: '2.9.0',
             size: '15 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-blue-500"><path d="m7.5 4.27 9 5.15"/><path d="m7.5 19.73 9-5.15"/><path d="M3.29 7.06L12 2l8.71 5.06V17L12 22l-8.71-5.06Z"/><path d="M12 22V12"/><path d="M12 12l8.71-5.06"/><path d="M12 12L3.29 7.06"/></svg>`,
-            link: 'https://example.com/downloads/Lossless-Scaling.rar',
+            link: 'https://www.mediafire.com/file/o6qf8kuvx1gxhie/Lossless.Scaling.v2.9.0.rar/file', // Updated link
             category: 'Apps',
         },
         // GAMES
@@ -422,7 +468,6 @@
             description: 'A challenging and atmospheric driving survival game.',
             version: 'Latest',
             size: '500 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://www.mediafire.com/file/z9e5yp6fu5ixon2/The-Long-Drive.rar/file',
             category: 'Games',
         },
@@ -432,7 +477,6 @@
             description: 'A god simulation game where you can create and destroy worlds.',
             version: '0.13.9',
             size: '120 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://www.mediafire.com/file/trrnehgvjp47mvr/WorldBox.v0.13.9.rar/file',
             category: 'Games',
         },
@@ -442,7 +486,6 @@
             description: 'A dystopian simulation game where you act as a state-installed landlord.',
             version: '1.7.58',
             size: '2.5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Beholder.zip',
             category: 'Games',
         },
@@ -452,7 +495,6 @@
             description: 'An imaginative puzzle platformer where you shape clay-like materials.',
             version: '1.2.0',
             size: '1.1 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Claybook.zip',
             category: 'Games',
         },
@@ -462,7 +504,6 @@
             description: 'The iconic open-world action-adventure game set in Liberty City.',
             version: 'Classic',
             size: '700 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/GTA-III.zip',
             category: 'Games',
         },
@@ -472,7 +513,6 @@
             description: 'Explore the gritty underworld of Liberty City as Niko Bellic.',
             version: 'Complete',
             size: '16 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/GTA-IV.zip',
             category: 'Games',
         },
@@ -482,7 +522,6 @@
             description: 'A fan-made modification for the Grand Theft Auto series.',
             version: '2.0',
             size: '900 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/GTA-Romania-II.zip',
             category: 'Games',
         },
@@ -492,7 +531,6 @@
             description: 'A realistic driving and trucking simulator.',
             version: '0.6.4',
             size: '3 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Motor-Town.zip',
             category: 'Games',
         },
@@ -502,7 +540,6 @@
             description: 'An award-winning indie puzzle game about a border immigration inspector.',
             version: '1.4.11.124',
             size: '80 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Papers-Please.zip',
             category: 'Games',
         },
@@ -512,7 +549,6 @@
             description: 'A cryptic puzzle game where curiosity can have dire consequences.',
             version: '1.6.6.6',
             size: '150 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Please-Dont-Touch-Anything.zip',
             category: 'Games',
         },
@@ -522,7 +558,6 @@
             description: 'Grand Theft Auto: San Andreas, a classic open-world adventure.',
             version: 'Ultimate',
             size: '4.7 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/GTA-SA.zip',
             category: 'Games',
         },
@@ -532,7 +567,6 @@
             description: 'Explore and reshape distant worlds in this space adventure game.',
             version: 'Latest',
             size: '5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/The-Astroneer.zip',
             category: 'Games',
         },
@@ -542,7 +576,6 @@
             description: 'A charming puzzle game about organizing household items.',
             version: '1.0',
             size: '400 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/A-Little-to-the-Left.zip',
             category: 'Games',
         },
@@ -552,7 +585,6 @@
             description: 'Experience the daily life of a bus driver in a large, freely-explorable urban area.',
             version: '2018',
             size: '6.5 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Bus-Simulator-18.zip',
             category: 'Games',
         },
@@ -562,7 +594,6 @@
             description: 'Outrun cops and rivals to become the most wanted racer.',
             version: '2012',
             size: '6 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/NFS-Most-Wanted-2012.zip',
             category: 'Games',
         },
@@ -572,7 +603,6 @@
             description: 'Build and drive your own creations from bricks.',
             version: 'Latest',
             size: '2 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Brick-Rigs.zip',
             category: 'Games',
         },
@@ -582,7 +612,6 @@
             description: 'Drive buses in various cities and complete routes.',
             version: 'Latest',
             size: '4 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Bus-Driver-Simulator.zip',
             category: 'Games',
         },
@@ -592,7 +621,6 @@
             description: 'Play as a lost cat in a cyberpunk city filled with robots.',
             version: '1.0',
             size: '8 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Stray.zip',
             category: 'Games',
         },
@@ -602,7 +630,6 @@
             description: 'Plan and execute the perfect heist in a fully destructible voxel world.',
             version: 'Latest',
             size: '4 GB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
             link: 'https://example.com/downloads/Teardown.zip',
             category: 'Games',
         },
@@ -612,8 +639,7 @@
             description: 'A classic marble-matching puzzle game.',
             version: '1.0',
             size: '15 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
-            link: 'https://example.com/downloads/Zuma-Deluxe.zip',
+            link: 'https://www.mediafire.com/file/733zs7umv0yggem/Zuma.Deluxe.zip/file', // Updated link
             category: 'Games',
         },
         {
@@ -622,11 +648,82 @@
             description: 'The sequel to the popular Zuma Deluxe, with new challenges.',
             version: '1.0',
             size: '50 MB',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-pink-500"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 18v3"/><path d="M12 21h4"/><path d="M12 21H8"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>`,
-            link: 'https://example.com/downloads/Zuma-Revenge.zip',
+            link: 'https://www.mediafire.com/file/qqjt5v9utok2jbd/Zumas.Revenge.zip/file', // Updated link
             category: 'Games',
         },
     ];
+
+    // Dynamically generate icons based on file extension
+    downloadItems.forEach(item => {
+        const url = new URL(item.link);
+        const pathSegments = url.pathname.split('/');
+        const filename = pathSegments[pathSegments.length - 1];
+        const parts = filename.split('.');
+        let extension = '';
+        if (parts.length > 1) {
+            extension = parts[parts.length - 1];
+        }
+
+        // Special handling for torrent files where the extension might be at the end of the filename
+        if (extension === 'file' && filename.includes('.torrent')) {
+            extension = 'torrent';
+        }
+
+        // Determine color class based on extension for consistency
+        let colorClass = 'text-gray-500';
+        switch (extension.toLowerCase()) {
+            case 'vmdk':
+            case 'iso':
+                colorClass = 'text-red-500';
+                break;
+            case 'rar':
+            case 'zip':
+                colorClass = 'text-yellow-500';
+                break;
+            case 'torrent':
+                colorClass = 'text-orange-500';
+                break;
+            case 'exe':
+                colorClass = 'text-blue-500';
+                break;
+            case 'mp3':
+                colorClass = 'text-green-500';
+                break;
+            case 'apk':
+                colorClass = 'text-teal-500';
+                break;
+            case 'cab':
+                colorClass = 'text-purple-500';
+                break;
+            // For apps and games, assign a general color if no specific file extension is relevant
+            case 'apps': // This won't be an extension, but for category-based coloring
+                colorClass = 'text-indigo-500';
+                break;
+            case 'games': // This won't be an extension, but for category-based coloring
+                colorClass = 'text-pink-500';
+                break;
+        }
+
+        // If the item is an app or game, and its link doesn't provide a clear extension,
+        // use a generic "APP" or "GAME" extension for the icon text
+        let displayExtension = extension;
+        if (!extension && item.category === 'Apps') {
+            displayExtension = 'APP';
+            colorClass = 'text-indigo-500'; // Ensure consistent color for generic app icon
+        } else if (!extension && item.category === 'Games') {
+            displayExtension = 'GAME';
+            colorClass = 'text-pink-500'; // Ensure consistent color for generic game icon
+        } else if (extension === 'file' && item.link.includes('.torrent')) {
+             displayExtension = 'TRNT'; // Shorten for better fit
+             colorClass = 'text-orange-500';
+        }
+
+        console.log(`Processing item: ${item.name}, Detected Extension: ${extension}, Display Extension: ${displayExtension}, Assigned Color Class: ${colorClass}`);
+
+
+        item.icon = createFileExtensionIcon(displayExtension, colorClass);
+    });
+
 
     let activeCategory = 'All';
     let searchQuery = '';
@@ -751,6 +848,9 @@
             return matchesCategory && matchesSearch;
         });
 
+        const currentSearchInputId = 'search-input'; // Store the ID of the search input
+        const currentSearchInputValue = searchQuery; // Store the current value of the search input
+
         let downloadsHtml = `
             <section class="mb-12">
                 <div class="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 mb-10">
@@ -762,9 +862,20 @@
                             type="text"
                             placeholder="Search"
                             class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
-                            id="search-input"
-                            value="${searchQuery}"
+                            id="${currentSearchInputId}"
+                            value="${currentSearchInputValue}"
                         />
+                        ${searchQuery ? `
+                            <button
+                                id="clear-search-button"
+                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        ` : ''}
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     </div>
                 </div>
@@ -815,11 +926,22 @@
         mainContentArea.innerHTML = downloadsHtml;
 
         // Attach event listeners after rendering HTML
-        const searchInput = document.getElementById('search-input');
+        const searchInput = document.getElementById(currentSearchInputId);
         if (searchInput) {
             searchInput.oninput = (e) => {
                 searchQuery = e.target.value;
-                renderApp(); // Re-render to apply search filter
+                renderDownloadsSection(); // Only re-render the downloads section
+            };
+            searchInput.focus(); // Re-focus the input after re-rendering
+            // Set cursor to the end of the text
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        }
+
+        const clearSearchButton = document.getElementById('clear-search-button');
+        if (clearSearchButton) {
+            clearSearchButton.onclick = () => {
+                searchQuery = '';
+                renderDownloadsSection();
             };
         }
 
@@ -838,7 +960,7 @@
                 button.onclick = () => {
                     activeCategory = category;
                     searchQuery = ''; // Clear search when changing category
-                    renderApp(); // Re-render to apply category filter
+                    renderDownloadsSection(); // Re-render to apply category filter
                 };
                 categoryButtonsContainer.appendChild(button);
             });
@@ -852,65 +974,65 @@
         if (headerButtonsContainer) {
             headerButtonsContainer.innerHTML = '';
 
-            // Add Tutorials button
-            const tutorialsButton = document.createElement('button');
-            tutorialsButton.textContent = "Tutorials";
-            tutorialsButton.className = "px-4 py-2 text-lg font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 rounded-md";
-            tutorialsButton.onclick = () => {
-                // Placeholder for tutorials page navigation
-                console.log("Tutorials button clicked!");
-                // In a real application, you might change the main content or navigate to a new page here.
-            };
-            headerButtonsContainer.appendChild(tutorialsButton);
+            // Only add header buttons if the user is authenticated
+            if (isAuthenticated) {
+                // Add Tutorials button
+                const tutorialsButton = document.createElement('button');
+                tutorialsButton.textContent = "Tutorials";
+                tutorialsButton.className = "px-4 py-2 text-lg font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 rounded-md";
+                tutorialsButton.onclick = () => {
+                    // Placeholder for tutorials page navigation
+                    console.log("Tutorials button clicked!");
+                    // In a real application, you might change the main content or navigate to a new page here.
+                };
+                headerButtonsContainer.appendChild(tutorialsButton);
+
+                // User Profile and Logout Dropdown
+                const userProfileContainer = document.createElement('div');
+                // Added 'relative' for dropdown positioning and 'group' for hover effects
+                userProfileContainer.className = "relative group ml-4";
+
+                const userInfoButton = document.createElement('button');
+                // Increased padding for larger hitbox
+                userInfoButton.className = "flex items-center gap-2 px-8 py-4 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+                userInfoButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-gray-500">
+                        <circle cx="12" cy="7" r="4"/>
+                        <path d="M12 15c-3.5 0-6.5 2-9 6h18c-2.5-4-5.5-6-9-6z"/>
+                    </svg>
+                    <span class="hidden sm:block">${userEmail || 'Anonymous'}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 text-gray-500">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                `;
+                userProfileContainer.appendChild(userInfoButton);
+
+                const dropdownMenu = document.createElement('div');
+                // Added transition and transform classes for animation
+                dropdownMenu.className = "absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
+                dropdownMenu.innerHTML = `
+                    <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 rounded-md">
+                        Logout
+                    </button>
+                `;
+                userProfileContainer.appendChild(dropdownMenu);
+
+                // Append the user profile container to the header
+                headerButtonsContainer.appendChild(userProfileContainer);
+
+                // Attach event listener for the logout button inside the dropdown
+                document.getElementById('logout-button').onclick = () => {
+                    isAuthenticated = false;
+                    isAdminUser = false;
+                    isAnonymousUser = false;
+                    userEmail = null;
+                    renderApp(); // Re-render to show auth page
+                };
+            }
         }
 
         if (isAuthenticated) {
             renderDownloadsSection();
-
-            // User Profile and Logout Dropdown
-            const userProfileContainer = document.createElement('div');
-            // Added 'relative' for dropdown positioning and 'group' for hover effects
-            userProfileContainer.className = "relative group ml-4";
-
-            const userInfoButton = document.createElement('button');
-            // Increased padding for larger hitbox
-            userInfoButton.className = "flex items-center gap-2 px-8 py-4 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
-            userInfoButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-gray-500">
-                    <circle cx="12" cy="7" r="4"/>
-                    <path d="M12 15c-3.5 0-6.5 2-9 6h18c-2.5-4-5.5-6-9-6z"/>
-                </svg>
-                <span class="hidden sm:block">${userEmail || 'Anonymous'}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 text-gray-500">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-            `;
-            userProfileContainer.appendChild(userInfoButton);
-
-            const dropdownMenu = document.createElement('div');
-            // Added transition and transform classes for animation
-            dropdownMenu.className = "absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
-            dropdownMenu.innerHTML = `
-                <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 rounded-md">
-                    Logout
-                </button>
-            `;
-            userProfileContainer.appendChild(dropdownMenu);
-
-            // Append the user profile container to the header
-            if (headerButtonsContainer) {
-                headerButtonsContainer.appendChild(userProfileContainer);
-            }
-
-            // Attach event listener for the logout button inside the dropdown
-            document.getElementById('logout-button').onclick = () => {
-                isAuthenticated = false;
-                isAdminUser = false;
-                isAnonymousUser = false;
-                userEmail = null;
-                renderApp(); // Re-render to show auth page
-            };
-
         } else {
             // User is not authenticated, show auth page
             renderAuthPage();
