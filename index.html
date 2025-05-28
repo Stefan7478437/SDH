@@ -45,6 +45,15 @@
             </p>
         </div>
     </footer>
+
+    <div class="fixed bottom-4 right-4 bg-gray-800 text-white text-xs px-2 py-1 rounded-full z-50">
+        <span class="block sm:hidden">XS</span>
+        <span class="hidden sm:block md:hidden">SM</span>
+        <span class="hidden md:block lg:hidden">MD</span>
+        <span class="hidden lg:block xl:hidden">LG</span>
+        <span class="hidden xl:block 2xl:hidden">XL</span>
+        <span class="hidden 2xl:block">2XL</span>
+    </div>
 </div>
 
 <script type="module">
@@ -113,22 +122,29 @@
         const foldedCornerColor = darkenColor(fillColor, 0.15); // Darken by 15%
 
         // Adjust font size and vertical position based on extension length
-        let fontSize = '8px';
-        let yOffset = '15'; // Base Y position for text
+        let fontSize = '6px'; // Base font size for smaller text
+        let yOffset = '14'; // Base Y position for text for smaller text
 
         if (extension.length === 3) {
-            fontSize = '7.5px';
-            yOffset = '14.8';
-        } else if (extension.length === 4) {
-            fontSize = '6.5px';
-            yOffset = '14.5';
-        } else if (extension.length >= 5) {
             fontSize = '5.5px';
-            yOffset = '14.2';
+            yOffset = '13.5';
+        } else if (extension.length === 4) {
+            fontSize = '4.5px';
+            yOffset = '13';
+        } else if (extension.length >= 5) {
+            fontSize = '3.5px';
+            yOffset = '12.5';
         }
 
+        // Specific adjustment for 'TRNT' (torrent)
+        if (extension.toUpperCase() === 'TRNT') {
+            fontSize = '4px'; // Even smaller for 'TRNT'
+            yOffset = '12.8'; // Adjusted y-offset for 'TRNT'
+        }
+
+
         // The SVG structure for a file icon with text
-        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="w-12 h-12">
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="w-16 h-16">
                     <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7L15 2Z" fill="${fillColor}" filter="url(#shadow)"/>
                     <path d="M14 2v4a2 2 0 0 0 2 2h4L14 2Z" fill="${foldedCornerColor}"/>
                     <text x="12" y="${yOffset}" text-anchor="middle" font-size="${fontSize}" fill="white" font-family="sans-serif" font-weight="500">${extension.toUpperCase()}</text>
@@ -144,7 +160,7 @@
     }
 
     // Data for download items
-    const downloadItems = [
+    let downloadItems = [
         // FILES
         {
             id: 43,
@@ -180,159 +196,6 @@
             version: 'x64',
             size: '4.5 GB',
             link: 'https://www.mediafire.com/file/5whk0hdpzha9a70/pearOS_Monterey.iso/file',
-            category: 'Files',
-        },
-        {
-            id: 47,
-            name: 'Tiny 10 x64',
-            description: 'Lightweight version of Windows 10 for x64 systems.',
-            version: 'x64',
-            size: '2.5 GB',
-            link: 'https://example.com/downloads/Tiny-10-x64.iso',
-            category: 'Files',
-        },
-        {
-            id: 48,
-            name: 'Windows 8.1 x64',
-            description: 'Installation media for Windows 8.1 x64.',
-            version: 'x64',
-            size: '3.5 GB',
-            link: 'https://example.com/downloads/Windows-8.1-x64.iso',
-            category: 'Files',
-        },
-        {
-            id: 49,
-            name: 'Windows 7 Ultimate sp1',
-            description: 'Service Pack 1 for Windows 7 Ultimate.',
-            version: 'SP1',
-            size: '3 GB',
-            link: 'https://example.com/downloads/Windows-7-Ultimate-sp1.iso',
-            category: 'Files',
-        },
-        {
-            id: 50,
-            name: 'Windows 95 OSR2',
-            description: 'Original Service Release 2 for Windows 95.',
-            version: 'OSR2',
-            size: '200 MB',
-            link: 'https://example.com/downloads/Windows-95-OSR2.iso',
-            category: 'Files',
-        },
-        {
-            id: 51,
-            name: 'Windows Vista Ultimate x64',
-            description: 'Installation media for Windows Vista Ultimate x64.',
-            version: 'x64',
-            size: '4 GB',
-            link: 'https://example.com/downloads/Windows-Vista-Ultimate-x64.iso',
-            category: 'Files',
-        },
-        {
-            id: 52,
-            name: 'Windows 10 x64',
-            description: 'Installation media for Windows 10 x64.',
-            version: 'x64',
-            size: '5 GB',
-            link: 'https://example.com/downloads/Windows-10-x64.iso',
-            category: 'Files',
-        },
-        {
-            id: 53,
-            name: 'Windows ME',
-            description: 'Installation media for Windows Millennium Edition.',
-            version: 'ME',
-            size: '300 MB',
-            link: 'https://example.com/downloads/Windows-ME.iso',
-            category: 'Files',
-        },
-        {
-            id: 54,
-            name: 'Windows XP',
-            description: 'Installation media for Windows XP.',
-            version: 'XP',
-            size: '600 MB',
-            link: 'https://example.com/downloads/Windows-XP.iso',
-            category: 'Files',
-        },
-        {
-            id: 55,
-            name: 'Windows Vista SP2 All Versions x86',
-            description: 'Service Pack 2 for all x86 versions of Windows Vista.',
-            version: 'SP2 x86',
-            size: '800 MB',
-            link: 'https://example.com/downloads/Windows-Vista-SP2-All-Versions-x86.iso',
-            category: 'Files',
-        },
-        {
-            id: 56,
-            name: 'Dell OEM Windows Vista HomePremium Build 6000 (sp0) x86',
-            description: 'Dell OEM version of Windows Vista HomePremium.',
-            version: 'Build 6000 (SP0) x82',
-            size: '3.8 GB',
-            link: 'https://example.com/downloads/Dell-OEM-Windows-Vista-HomePremium-Build-6000-x86.iso',
-            category: 'Files',
-        },
-        {
-            id: 57,
-            name: 'Windows Vista Ultimate SP2 X86',
-            description: 'Service Pack 2 for Windows Vista Ultimate x86.',
-            version: 'SP2 x86',
-            size: '4.2 GB',
-            link: 'https://example.com/downloads/Windows-Vista-Ultimate-SP2-X86.iso',
-            category: 'Files',
-        },
-        {
-            id: 58,
-            name: 'Windows XP Professional SP3 x86',
-            description: 'Service Pack 3 for Windows XP Professional x86.',
-            version: 'SP3 x86',
-            size: '700 MB',
-            link: 'https://example.com/downloads/Windows-XP-Professional-SP3-x86.iso',
-            category: 'Files',
-        },
-        {
-            id: 59,
-            name: 'Interlop Tools (all)',
-            description: 'A collection of Interlop Tools.',
-            version: 'All',
-            size: '50 MB',
-            link: 'https://example.com/downloads/Interlop-Tools-all.zip',
-            category: 'Files',
-        },
-        {
-            id: 60,
-            name: 'Microsoft App Installer',
-            description: 'Installer for Microsoft applications.',
-            version: 'Latest',
-            size: '10 MB',
-            link: 'https://example.com/downloads/Microsoft-App-Installer.exe',
-            category: 'Files',
-        },
-        {
-            id: 61,
-            name: 'Continuum Cabs',
-            description: 'Continuum CAB files for Windows devices.',
-            version: 'Latest',
-            size: '200 MB',
-            link: 'https://example.com/downloads/Continuum-Cabs.zip',
-            category: 'Files',
-        },
-        {
-            id: 62,
-            name: 'Iutools',
-            description: 'Utility tools for various purposes.',
-            version: 'Latest',
-            size: '5 MB',
-            link: 'https://example.com/downloads/Iutools.zip',
-            category: 'Files',
-        },
-        {
-            id: 63,
-            name: 'Microsoft Lumia Default Ringtone',
-            description: 'Default ringtone from Microsoft Lumia phones.',
-            version: 'MP3',
-            size: '1 MB',
-            link: 'https://example.com/downloads/Microsoft-Lumia-Default-Ringtone.mp3',
             category: 'Files',
         },
         {
@@ -373,57 +236,12 @@
             category: 'Apps',
         },
         {
-            id: 33,
-            name: 'Adobe Gen-P',
-            description: 'A patcher for Adobe products.',
-            version: '2.7',
-            size: '5 MB',
-            link: 'https://example.com/downloads/Adobe-Gen-P.zip',
-            category: 'Apps',
-        },
-        {
-            id: 34,
-            name: 'Cinebench R23',
-            description: 'Industry-standard benchmark for CPU performance.',
-            version: 'R23',
-            size: '300 MB',
-            link: 'https://example.com/downloads/Cinebench-R23.zip', // Reverted link
-            category: 'Apps',
-        },
-        {
             id: 35,
             name: 'Microsoft Office Professional Plus 2010',
             description: 'Comprehensive suite of productivity applications from Microsoft.',
             version: '2010',
             size: '1.5 GB',
             link: 'https://www.mediafire.com/file/wtkrrrx41nw9czb/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO/file',
-            category: 'Apps',
-        },
-        {
-            id: 36,
-            name: 'WPV XAP Deployer 2.0',
-            description: 'Tool for deploying XAP files to Windows Phone devices.',
-            version: '2.0',
-            size: '2 MB',
-            link: 'https://example.com/downloads/WPV-XAP-Deployer-2.0.zip',
-            category: 'Apps',
-        },
-        {
-            id: 37,
-            name: 'Adobe Photoshop 2023',
-            description: 'The industry-standard image editing software.',
-            version: '2023',
-            size: '3.2 GB', // Updated size
-            link: 'https://example.com/downloads/Adobe-Photoshop-2023.zip',
-            category: 'Apps',
-        },
-        {
-            id: 38,
-            name: 'Microsoft Office Professional Plus 2007',
-            description: 'Older version of Microsoft Office suite for productivity.',
-            version: '2007',
-            size: '750 MB', // Updated size
-            link: 'https://example.com/downloads/Microsoft-Office-Professional-Plus-2007.iso',
             category: 'Apps',
         },
         {
@@ -462,34 +280,6 @@
             link: 'https://www.mediafire.com/file/o6qf8kuvx1gxhie/Lossless.Scaling.v2.9.0.rar/file', // Updated link
             category: 'Apps',
         },
-        // APKs (New Category)
-        {
-            id: 65,
-            name: 'TikTok Lite',
-            description: 'A lighter version of the popular short-form video app.',
-            version: '28.0.3',
-            size: '30 MB',
-            link: 'https://example.com/downloads/tiktok-lite.apk',
-            category: 'APK',
-        },
-        {
-            id: 66,
-            name: 'YouTube Vanced',
-            description: 'A popular modded YouTube client with ad-blocking and background playback.',
-            version: '17.03.38',
-            size: '100 MB',
-            link: 'https://example.com/downloads/youtube-vanced.apk',
-            category: 'APK',
-        },
-        {
-            id: 67,
-            name: 'Spotify Premium Mod',
-            description: 'Modded Spotify app with premium features unlocked.',
-            version: '8.8.0',
-            size: '80 MB',
-            link: 'https://example.com/downloads/spotify-premium-mod.apk',
-            category: 'APK',
-        },
         // GAMES
         {
             id: 9,
@@ -507,159 +297,6 @@
             version: '0.13.9',
             size: '130 MB', // Updated size
             link: 'https://www.mediafire.com/file/trrnehgvjp47mvr/WorldBox.v0.13.9.rar/file',
-            category: 'Games',
-        },
-        {
-            id: 11,
-            name: 'Beholder',
-            description: 'A dystopian simulation game where you act as a state-installed landlord.',
-            version: '1.7.58',
-            size: '2.6 GB', // Updated size
-            link: 'https://example.com/downloads/Beholder.zip',
-            category: 'Games',
-        },
-        {
-            id: 12,
-            name: 'Claybook',
-            description: 'An imaginative puzzle platformer where you shape clay-like materials.',
-            version: '1.2.0',
-            size: '1.2 GB', // Updated size
-            link: 'https://example.com/downloads/Claybook.zip',
-            category: 'Games',
-        },
-        {
-            id: 13,
-            name: 'GTA III',
-            description: 'The iconic open-world action-adventure game set in Liberty City.',
-            version: 'Classic',
-            size: '720 MB', // Updated size
-            link: 'https://example.com/downloads/GTA-III.zip',
-            category: 'Games',
-        },
-        {
-            id: 14,
-            name: 'GTA IV',
-            description: 'Explore the gritty underworld of Liberty City as Niko Bellic.',
-            version: 'Complete',
-            size: '17 GB', // Updated size
-            link: 'https://example.com/downloads/GTA-IV.zip',
-            category: 'Games',
-        },
-        {
-            id: 15,
-            name: 'GTA Romania II',
-            description: 'A fan-made modification for the Grand Theft Auto series.',
-            version: '2.0',
-            size: '950 MB', // Updated size
-            link: 'https://example.com/downloads/GTA-Romania-II.zip',
-            category: 'Games',
-        },
-        {
-            id: 16,
-            name: 'Motor Town',
-            description: 'A realistic driving and trucking simulator.',
-            version: '0.6.4',
-            size: '3.1 GB', // Updated size
-            link: 'https://example.com/downloads/Motor-Town.zip',
-            category: 'Games',
-        },
-        {
-            id: 17,
-            name: 'Papers, Please!',
-            description: 'An award-winning indie puzzle game about a border immigration inspector.',
-            version: '1.4.11.124',
-            size: '85 MB', // Updated size
-            link: 'https://example.com/downloads/Papers-Please.zip',
-            category: 'Games',
-        },
-        {
-            id: 18,
-            name: 'Please Don’t Touch Anything',
-            description: 'A cryptic puzzle game where curiosity can have dire consequences.',
-            version: '1.6.6.6',
-            size: '160 MB', // Updated size
-            link: 'https://example.com/downloads/Please-Dont-Touch-Anything.zip',
-            category: 'Games',
-        },
-        {
-            id: 19,
-            name: 'GTA SA',
-            description: 'Grand Theft Auto: San Andreas, a classic open-world adventure.',
-            version: 'Ultimate',
-            size: '4.8 GB', // Updated size
-            link: 'https://example.com/downloads/GTA-SA.zip',
-            category: 'Games',
-        },
-        {
-            id: 20,
-            name: 'The Astroneer',
-            description: 'Explore and reshape distant worlds in this space adventure game.',
-            version: 'Latest',
-            size: '5.2 GB', // Updated size
-            link: 'https://example.com/downloads/The-Astroneer.zip',
-            category: 'Games',
-        },
-        {
-            id: 21,
-            name: 'A Little to the Left',
-            description: 'A charming puzzle game about organizing household items.',
-            version: '1.0',
-            size: '420 MB', // Updated size
-            link: 'https://example.com/downloads/A-Little-to-the-Left.zip',
-            category: 'Games',
-        },
-        {
-            id: 22,
-            name: 'Bus Simulator 18',
-            description: 'Experience the daily life of a bus driver in a large, freely-explorable urban area.',
-            version: '2018',
-            size: '6.8 GB', // Updated size
-            link: 'https://example.com/downloads/Bus-Simulator-18.zip',
-            category: 'Games',
-        },
-        {
-            id: 23,
-            name: 'NFS Most Wanted 2012',
-            description: 'Outrun cops and rivals to become the most wanted racer.',
-            version: '2012',
-            size: '6.3 GB', // Updated size
-            link: 'https://example.com/downloads/NFS-Most-Wanted-2012.zip',
-            category: 'Games',
-        },
-        {
-            id: 24,
-            name: 'Brick Rigs',
-            description: 'Build and drive your own creations from bricks.',
-            version: 'Latest',
-            size: '2.1 GB', // Updated size
-            link: 'https://example.com/downloads/Brick-Rigs.zip',
-            category: 'Games',
-        },
-        {
-            id: 25,
-            name: 'Bus Driver Simulator',
-            description: 'Drive buses in various cities and complete routes.',
-            version: 'Latest',
-            size: '4.1 GB', // Updated size
-            link: 'https://example.com/downloads/Bus-Driver-Simulator.zip',
-            category: 'Games',
-        },
-        {
-            id: 26,
-            name: 'Stray',
-            description: 'Play as a lost cat in a cyberpunk city filled with robots.',
-            version: '1.0',
-            size: '8.5 GB', // Updated size
-            link: 'https://example.com/downloads/Stray.zip',
-            category: 'Games',
-        },
-        {
-            id: 27,
-            name: 'Teardown',
-            description: 'Plan and execute the perfect heist in a fully destructible voxel world.',
-            version: 'Latest',
-            size: '4.3 GB', // Updated size
-            link: 'https://example.com/downloads/Teardown.zip',
             category: 'Games',
         },
         {
@@ -682,11 +319,23 @@
         },
     ];
 
+    // Filter out items with generic example.com links
+    downloadItems = downloadItems.filter(item => !item.link.includes('example.com'));
+
     // Dynamically generate icons based on file extension
     downloadItems.forEach(item => {
         const url = new URL(item.link);
-        const pathSegments = url.pathname.split('/');
-        const filename = pathSegments[pathSegments.length - 1];
+        const pathSegments = url.pathname.split('/').filter(s => s !== ''); // Filter out empty strings
+        let filename = '';
+        if (pathSegments.length > 0) {
+            // MediaFire URLs often end with '/file', so the actual filename is the second to last segment.
+            // Or, if it's not a mediafire link, it's just the last segment.
+            if (pathSegments[pathSegments.length - 1] === 'file' && pathSegments.length > 1) {
+                filename = pathSegments[pathSegments.length - 2];
+            } else {
+                filename = pathSegments[pathSegments.length - 1];
+            }
+        }
         const parts = filename.split('.');
         let extension = '';
         if (parts.length > 1) {
@@ -770,6 +419,74 @@
     // Ensure currentYearSpan exists before trying to set its textContent
     if (currentYearSpan) {
         currentYearSpan.textContent = new Date().getFullYear();
+    }
+
+    /**
+     * Calls the Gemini API to generate a more detailed description for a download item.
+     * @param {number} itemId - The ID of the item to update.
+     * @param {string} currentName - The current name of the item.
+     * @param {string} currentDescription - The current description of the item.
+     */
+    async function generateDescription(itemId, currentName, currentDescription) {
+        const itemIndex = downloadItems.findIndex(item => item.id === itemId);
+        if (itemIndex === -1) {
+            console.error(`Item with ID ${itemId} not found.`);
+            return;
+        }
+
+        const originalButtonText = document.getElementById(`generate-desc-button-${itemId}`).innerHTML;
+        document.getElementById(`generate-desc-button-${itemId}`).disabled = true;
+        document.getElementById(`generate-desc-button-${itemId}`).innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Generating...
+        `;
+
+        try {
+            const prompt = `Given the following software/game/file name and a brief description, generate a more detailed, engaging, and appealing description. Focus on what it does, its benefits, and key features. Keep it concise, around 2-3 sentences.
+                            Name: "${currentName}"
+                            Current Description: "${currentDescription}"
+                            New Description:`;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // Leave as empty string, Canvas will provide it
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API error: ${response.status} - ${errorData.error.message}`);
+            }
+
+            const result = await response.json();
+
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const newDescription = result.candidates[0].content.parts[0].text;
+                downloadItems[itemIndex].description = newDescription.trim(); // Update the description
+                renderDownloadsSection(); // Re-render to show the updated description
+            } else {
+                console.warn("Gemini API response structure unexpected:", result);
+                alert("Failed to generate description: Unexpected API response.");
+            }
+        } catch (error) {
+            console.error("Error generating description:", error);
+            alert(`Failed to generate description: ${error.message}. Please try again.`);
+        } finally {
+            // Revert button state even if there's an error
+            document.getElementById(`generate-desc-button-${itemId}`).disabled = false;
+            document.getElementById(`generate-desc-button-${itemId}`).innerHTML = originalButtonText;
+        }
     }
 
 
@@ -925,7 +642,7 @@
                             <h3 class="text-xl font-semibold text-gray-900 mb-2">
                                 ${item.name}
                             </h3>
-                            <p class="text-gray-600 text-sm mb-4 flex-grow">
+                            <p class="text-gray-600 text-sm mb-4 flex-grow" id="description-${item.id}">
                                 ${item.description}
                             </p>
                             <div class="flex justify-between items-center w-full text-sm text-gray-500 mb-4">
@@ -940,6 +657,15 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                 Download Now
                             </a>
+                            ${isAdminUser ? `
+                                <button
+                                    id="generate-desc-button-${item.id}"
+                                    class="mt-4 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105"
+                                    onclick="generateDescription(${item.id}, '${item.name.replace(/'/g, "\\'")}', '${item.description.replace(/'/g, "\\'")}')"
+                                >
+                                    Generate Description (AI)
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -1026,25 +752,25 @@
                 userProfileContainer.className = "relative group ml-4";
 
                 const userInfoButton = document.createElement('button');
-                // Increased padding for larger hitbox
-                userInfoButton.className = "flex items-center gap-2 px-8 py-4 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+                // Updated class names for consistent styling
+                userInfoButton.className = "flex items-center gap-2 px-8 py-4 text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105";
                 userInfoButton.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-white">
                         <circle cx="12" cy="7" r="4"/>
                         <path d="M12 15c-3.5 0-6.5 2-9 6h18c-2.5-4-5.5-6-9-6z"/>
                     </svg>
                     <span class="hidden sm:block">${userEmail || 'Anonymous'}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 text-white">
                         <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 `;
                 userProfileContainer.appendChild(userInfoButton);
 
                 const dropdownMenu = document.createElement('div');
-                // Added transition and transform classes for animation
-                dropdownMenu.className = "absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
+                // Changed w-48 to w-full to match the parent's width dynamically
+                dropdownMenu.className = "absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
                 dropdownMenu.innerHTML = `
-                    <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 rounded-md">
+                    <button id="logout-button" class="block w-full text-left px-8 py-4 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:scale-105">
                         Logout
                     </button>
                 `;
@@ -1096,5 +822,8 @@
             };
         }
     });
+
+    // Make generateDescription function globally accessible
+    window.generateDescription = generateDescription;
 </script>
 </body>
