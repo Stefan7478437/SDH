@@ -126,12 +126,15 @@
 </div>
 
 <script type="module">
+    // This code is designed to work seamlessly when deployed to GitHub Pages.
+    // All external resources are loaded via CDNs, and internal links/paths are handled within the single HTML file.
+
     // Define the email address where access requests will be sent
     const REQUEST_RECIPIENT_EMAIL = 'SDH_REQ@mail.com';
     // Define the email address for file requests
     const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com'; // New constant for file requests
     // Define the website version
-    const WEBSITE_VERSION = 'v1.0.3'; // Updated version
+    const WEBSITE_VERSION = 'v1.0.6'; // Updated version
 
     // Local authentication state
     let isAuthenticated = false;
@@ -899,18 +902,20 @@
         console.log("Rendering admin section");
         mainContentArea.innerHTML = `
             <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Admin Panel</h2>
-                <p class="text-lg text-gray-700 mb-4">
-                    Welcome, Admin! This is where you can manage various aspects of the site.
-                </p>
-                <div class="space-y-4">
-                    <button id="manage-users-button" class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-orange-700 drop-shadow-md">
+                    Admin Panel
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <button id="manage-users-button" class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         Manage Users
                     </button>
-                    <button class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105">
+                    <button class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M12 17.5V3"/><path d="M4.2 12.5 12 3l7.8 9.5"/><path d="M10 16h4"/><path d="M8 20h8"/><path d="M6 24h12"/></svg>
                         Manage Downloads
                     </button>
-                    <button class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-300 transform hover:scale-105">
+                    <button class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-300 transform hover:scale-105 col-span-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M3 3v18h18"/><path d="M18.7 8.3L12 15l-3.3-3.3L3 18"/><path d="m18 3 6 6"/></svg>
                         View Analytics
                     </button>
                 </div>
