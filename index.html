@@ -645,6 +645,7 @@
 
     // Function to render the authentication page
     function renderAuthPage() {
+        console.log("Rendering auth page");
         mainContentArea.innerHTML = `
             <div class="flex items-center justify-center min-h-[calc(100vh-16rem)]">
                 <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md text-center">
@@ -742,6 +743,7 @@
 
     // Function to render the downloads section
     function renderDownloadsSection() {
+        console.log("Rendering downloads section");
         const filteredDownloads = downloadItems.filter(item => {
             const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
             const matchesSearch = searchQuery === '' || item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -845,6 +847,7 @@
 
     // Main render function
     function renderApp() {
+        console.log("renderApp called. User is authenticated:", isAuthenticated);
         // Clear header buttons always, as they are dynamic based on auth state
         if (headerButtonsContainer) {
             headerButtonsContainer.innerHTML = '';
@@ -916,7 +919,16 @@
 
     // Initial render when the page loads
     document.addEventListener('DOMContentLoaded', () => {
-        renderApp();
+        console.log("DOMContentLoaded fired");
+        try {
+            renderApp();
+        } catch (error) {
+            console.error("Error during initial app rendering:", error);
+            // Optionally display a user-friendly error message on the page
+            if (mainContentArea) {
+                mainContentArea.innerHTML = `<div class="text-red-600 text-center text-xl mt-10">An error occurred while loading the page. Please try again later. Check the console for more details.</div>`;
+            }
+        }
 
         // Attach event listener for the new "Request File" button after initial render
         const requestFileButton = document.getElementById('request-file-button');
