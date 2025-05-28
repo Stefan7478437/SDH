@@ -9,6 +9,48 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-width: 90%;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -20,6 +62,7 @@
                 <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-800 drop-shadow-md">
                     SDH
                 </span>
+                <span id="website-version" class="ml-4 text-xl font-semibold text-gray-600"></span>
             </h1>
             <div class="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0" id="header-buttons-container">
                 </div>
@@ -56,19 +99,73 @@
     </div>
 </div>
 
+<div id="manage-users-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button id="close-manage-users-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold">
+            &times;
+        </button>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Manage Users</h2>
+
+        <div class="mb-6 border-b pb-4">
+            <h3 class="text-xl font-semibold mb-3">Add New User</h3>
+            <input type="email" id="new-user-email" placeholder="New user email" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" />
+            <div class="flex items-center mb-3">
+                <input type="checkbox" id="new-user-is-admin" class="mr-2 h-5 w-5 text-blue-600 rounded" />
+                <label for="new-user-is-admin" class="text-gray-700">Grant Admin Access</label>
+            </div>
+            <p id="add-user-message" class="text-sm mt-1 mb-2"></p>
+            <button id="add-user-button" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Add User</button>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-semibold mb-3">Current Users</h3>
+            <ul id="user-list" class="space-y-3">
+                </ul>
+        </div>
+    </div>
+</div>
+
 <script type="module">
-    // Define the specific email addresses that grant access
-    const ALLOWED_EMAILS = ['admin@sdh.com', 'user@sdh.com'];
     // Define the email address where access requests will be sent
     const REQUEST_RECIPIENT_EMAIL = 'SDH_REQ@mail.com';
     // Define the email address for file requests
     const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com'; // New constant for file requests
+    // Define the website version
+    const WEBSITE_VERSION = 'v1.0.3'; // Updated version
 
     // Local authentication state
     let isAuthenticated = false;
     let isAdminUser = false; // Flag for admin access
     let isAnonymousUser = false; // Flag for anonymous access
     let userEmail = null; // Store the email if authenticated via specific email
+    let currentView = 'downloads'; // 'downloads' or 'tutorials' or 'admin'
+
+    // Persistent storage for users (simulated)
+    // Structure: [{ email: 'admin@sdh.com', isAdmin: true }, { email: 'user@sdh.com', isAdmin: false }]
+    let ALLOWED_USERS = loadUsersFromLocalStorage();
+
+    function loadUsersFromLocalStorage() {
+        try {
+            const usersJson = localStorage.getItem('allowedUsers');
+            if (usersJson) {
+                const users = JSON.parse(usersJson);
+                // Basic validation to ensure it's an array of objects with email and isAdmin
+                if (Array.isArray(users) && users.every(u => typeof u.email === 'string' && typeof u.isAdmin === 'boolean')) {
+                    return users;
+                }
+            }
+        } catch (e) {
+            console.error("Error loading users from localStorage:", e);
+            // Fallback to default if storage is corrupted
+        }
+        // Default users if no data or invalid data in localStorage
+        return [{ email: 'admin@sdh.com', isAdmin: true }, { email: 'user@sdh.com', isAdmin: false }];
+    }
+
+    function saveUsersToLocalStorage() {
+        localStorage.setItem('allowedUsers', JSON.stringify(ALLOWED_USERS));
+    }
+
 
     /**
      * Darkens a given hex color by a specified percentage.
@@ -415,10 +512,24 @@
     const headerButtonsContainer = document.getElementById('header-buttons-container');
     const mainContentArea = document.getElementById('main-content-area');
     const currentYearSpan = document.getElementById('current-year');
+    const websiteVersionSpan = document.getElementById('website-version');
+    const manageUsersModal = document.getElementById('manage-users-modal');
+    const closeManageUsersModalButton = document.getElementById('close-manage-users-modal');
+    const newUserEmailInput = document.getElementById('new-user-email');
+    const newUserIsAdminCheckbox = document.getElementById('new-user-is-admin');
+    const addUserMessage = document.getElementById('add-user-message');
+    const addUserButton = document.getElementById('add-user-button');
+    const userListElement = document.getElementById('user-list');
+
 
     // Ensure currentYearSpan exists before trying to set its textContent
     if (currentYearSpan) {
         currentYearSpan.textContent = new Date().getFullYear();
+    }
+
+    // Set the website version
+    if (websiteVersionSpan) {
+        websiteVersionSpan.textContent = WEBSITE_VERSION;
     }
 
     /**
@@ -532,12 +643,15 @@
             const email = document.getElementById('auth-email').value.toLowerCase();
             const errorMessage = document.getElementById('auth-error-message');
 
-            if (ALLOWED_EMAILS.includes(email)) {
+            const user = ALLOWED_USERS.find(u => u.email === email);
+
+            if (user) {
                 isAuthenticated = true;
                 isAnonymousUser = false;
                 userEmail = email;
-                isAdminUser = (email === 'admin@sdh.com'); // Set admin flag
+                isAdminUser = user.isAdmin; // Set admin flag based on stored data
                 errorMessage.classList.add('hidden');
+                currentView = 'downloads'; // Default to downloads after login
                 renderApp(); // Re-render to show downloads
             } else {
                 errorMessage.textContent = "Invalid email address for access. Please try again.";
@@ -550,6 +664,7 @@
             isAnonymousUser = true;
             isAdminUser = false;
             userEmail = null; // No specific email for anonymous users
+            currentView = 'downloads'; // Default to downloads after anonymous login
             renderApp(); // Re-render to show downloads (as anonymous)
         };
 
@@ -726,9 +841,229 @@
         }
     }
 
+    // Function to render the tutorials section
+    function renderTutorialsSection() {
+        console.log("Rendering tutorials section");
+        mainContentArea.innerHTML = `
+            <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Written Tutorials</h2>
+                <p class="text-lg text-gray-700 mb-4">
+                    Welcome to the SDH Tutorials section! Here you'll find guides and instructions to help you make the most of our downloads and related tools.
+                </p>
+                <div class="space-y-6">
+                    <div class="border-b pb-4">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">1. Getting Started with Windows Device Recovery Tool</h3>
+                        <p class="text-gray-600">
+                            Learn how to use the Windows Device Recovery Tool to fix issues with your Windows phone or tablet. This tutorial covers installation, device detection, and flashing firmware.
+                        </p>
+                        <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                    </div>
+                    <div class="border-b pb-4">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">2. Basic Usage of Adobe Photoshop 2023</h3>
+                        <p class="text-gray-600">
+                            A beginner-friendly guide to Adobe Photoshop 2023. Understand the interface, basic tools, and how to perform common image editing tasks.
+                        </p>
+                        <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                    </div>
+                    <div class="border-b pb-4">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">3. Installing Microsoft Office Professional Plus 2010</h3>
+                        <p class="text-gray-600">
+                            Step-by-step instructions for installing Microsoft Office Professional Plus 2010 from an ISO file.
+                        </p>
+                        <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                    </div>
+                    <div class="border-b pb-4">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">4. Playing GTA SA on Modern Systems</h3>
+                        <p class="text-gray-600">
+                            Tips and tricks to get Grand Theft Auto: San Andreas running smoothly on newer operating systems, including common fixes and recommended mods.
+                        </p>
+                        <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">5. Understanding VMDK Files and Virtual Machines</h3>
+                        <p class="text-gray-600">
+                            An introduction to VMDK file format and how to use them with virtualization software like VMware or VirtualBox.
+                        </p>
+                        <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                    </div>
+                </div>
+                <p class="text-center text-gray-500 mt-8">
+                    More tutorials coming soon!
+                </p>
+            </div>
+        `;
+    }
+
+    // Function to render the admin section
+    function renderAdminSection() {
+        console.log("Rendering admin section");
+        mainContentArea.innerHTML = `
+            <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Admin Panel</h2>
+                <p class="text-lg text-gray-700 mb-4">
+                    Welcome, Admin! This is where you can manage various aspects of the site.
+                </p>
+                <div class="space-y-4">
+                    <button id="manage-users-button" class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
+                        Manage Users
+                    </button>
+                    <button class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105">
+                        Manage Downloads
+                    </button>
+                    <button class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-300 transform hover:scale-105">
+                        View Analytics
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('manage-users-button').onclick = showManageUsersModal;
+    }
+
+    // --- User Management Modal Functions ---
+    function showManageUsersModal() {
+        manageUsersModal.classList.add('open');
+        renderUserList(); // Populate the list when modal opens
+    }
+
+    function hideManageUsersModal() {
+        manageUsersModal.classList.remove('open');
+        addUserMessage.textContent = ''; // Clear message on close
+        newUserEmailInput.value = '';
+        newUserIsAdminCheckbox.checked = false;
+    }
+
+    function renderUserList() {
+        userListElement.innerHTML = ''; // Clear existing list
+        ALLOWED_USERS.forEach(user => {
+            const listItem = document.createElement('li');
+            listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200';
+            listItem.innerHTML = `
+                <span class="font-medium text-gray-800 break-all mr-2">${user.email}</span>
+                <div class="flex items-center space-x-3">
+                    ${user.email === userEmail ? `
+                        <span class="text-gray-500 text-sm italic">(Current User)</span>
+                    ` : `
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" data-email="${user.email}" ${user.isAdmin ? 'checked' : ''} class="toggle-admin-checkbox sr-only" />
+                            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ml-2 text-sm font-medium text-gray-900">Admin</span>
+                        </label>
+                        <button data-email="${user.email}" class="remove-user-button px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded-md hover:bg-red-600 transition-colors">
+                            Remove
+                        </button>
+                    `}
+                </div>
+            `;
+            userListElement.appendChild(listItem);
+        });
+
+        // Attach event listeners to newly created buttons/checkboxes
+        userListElement.querySelectorAll('.remove-user-button').forEach(button => {
+            button.onclick = (event) => removeUser(event.target.dataset.email);
+        });
+
+        userListElement.querySelectorAll('.toggle-admin-checkbox').forEach(checkbox => {
+            checkbox.onchange = (event) => toggleAdminStatus(event.target.dataset.email);
+        });
+    }
+
+    function addUser() {
+        const email = newUserEmailInput.value.toLowerCase().trim();
+        const isAdmin = newUserIsAdminCheckbox.checked;
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            addUserMessage.textContent = "Please enter a valid email address.";
+            addUserMessage.className = "text-red-500 text-sm mt-1";
+            return;
+        }
+
+        if (ALLOWED_USERS.some(u => u.email === email)) {
+            addUserMessage.textContent = "This email address already exists.";
+            addUserMessage.className = "text-red-500 text-sm mt-1";
+            return;
+        }
+
+        ALLOWED_USERS.push({ email, isAdmin });
+        saveUsersToLocalStorage();
+        renderUserList(); // Update the displayed list
+        addUserMessage.textContent = `User "${email}" added successfully!`;
+        addUserMessage.className = "text-green-600 text-sm mt-1";
+        newUserEmailInput.value = '';
+        newUserIsAdminCheckbox.checked = false;
+
+        // If the added user is the current logged-in user, and their admin status changed
+        if (userEmail === email) {
+            isAdminUser = isAdmin;
+            renderApp(); // Re-render app to update header if admin status changed for current user
+        }
+    }
+
+    function removeUser(emailToRemove) {
+        if (emailToRemove === 'admin@sdh.com' && ALLOWED_USERS.find(u => u.email === 'admin@sdh.com' && u.isAdmin)) {
+            alert("The primary admin user 'admin@sdh.com' cannot be removed if it's the only admin. Please ensure there's at least one other admin.");
+            return;
+        }
+        if (emailToRemove === userEmail) {
+            alert("You cannot remove your own account while logged in.");
+            return;
+        }
+
+        const initialLength = ALLOWED_USERS.length;
+        ALLOWED_USERS = ALLOWED_USERS.filter(user => user.email !== emailToRemove);
+        if (ALLOWED_USERS.length < initialLength) {
+            saveUsersToLocalStorage();
+            renderUserList(); // Update the displayed list
+            // Potentially re-render the app if an admin user who was not the current one is removed
+            // and their removal affects overall user experience (e.g., if they were the only other admin)
+        }
+    }
+
+    function toggleAdminStatus(emailToToggle) {
+        const userIndex = ALLOWED_USERS.findIndex(u => u.email === emailToToggle);
+        if (userIndex !== -1) {
+            const currentAdminStatus = ALLOWED_USERS[userIndex].isAdmin;
+
+            // Prevent removing admin status from the only admin
+            if (currentAdminStatus && emailToToggle === 'admin@sdh.com' && ALLOWED_USERS.filter(u => u.isAdmin).length === 1) {
+                alert("This is the last admin account. You cannot revoke its admin access.");
+                // Revert checkbox state in UI if it was programmatically toggled
+                renderUserList();
+                return;
+            }
+
+            ALLOWED_USERS[userIndex].isAdmin = !currentAdminStatus;
+            saveUsersToLocalStorage();
+            renderUserList(); // Update the displayed list
+
+            // If the toggled user is the current logged-in user, update isAdminUser state
+            if (userEmail === emailToToggle) {
+                isAdminUser = ALLOWED_USERS[userIndex].isAdmin;
+                renderApp(); // Re-render app to update header/access
+            }
+        }
+    }
+
+    // Attach event listeners for the modal
+    if (closeManageUsersModalButton) {
+        closeManageUsersModalButton.onclick = hideManageUsersModal;
+    }
+    if (addUserButton) {
+        addUserButton.onclick = addUser;
+    }
+    // Close modal if clicking outside content
+    if (manageUsersModal) {
+        manageUsersModal.addEventListener('click', (e) => {
+            if (e.target === manageUsersModal) {
+                hideManageUsersModal();
+            }
+        });
+    }
+
     // Main render function
     function renderApp() {
-        console.log("renderApp called. User is authenticated:", isAuthenticated);
+        console.log("renderApp called. User is authenticated:", isAuthenticated, "isAdminUser:", isAdminUser, "currentView:", currentView);
         // Clear header buttons always, as they are dynamic based on auth state
         if (headerButtonsContainer) {
             headerButtonsContainer.innerHTML = '';
@@ -738,13 +1073,35 @@
                 // Add Tutorials button
                 const tutorialsButton = document.createElement('button');
                 tutorialsButton.textContent = "Tutorials";
-                tutorialsButton.className = "px-4 py-2 text-lg font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 rounded-md";
+                tutorialsButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'tutorials' ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
                 tutorialsButton.onclick = () => {
-                    // Placeholder for tutorials page navigation
-                    console.log("Tutorials button clicked!");
-                    // In a real application, you might change the main content or navigate to a new page here.
+                    currentView = 'tutorials';
+                    renderApp();
                 };
                 headerButtonsContainer.appendChild(tutorialsButton);
+
+                // Add Admin button if user is admin
+                if (isAdminUser) {
+                    const adminButton = document.createElement('button');
+                    adminButton.textContent = "Admin";
+                    adminButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'admin' ? 'bg-red-100 text-red-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
+                    adminButton.onclick = () => {
+                        currentView = 'admin';
+                        renderApp();
+                    };
+                    headerButtonsContainer.appendChild(adminButton);
+                }
+
+                // Add Home/Downloads button
+                const homeButton = document.createElement('button');
+                homeButton.textContent = "Home";
+                homeButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'downloads' ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
+                homeButton.onclick = () => {
+                    currentView = 'downloads';
+                    renderApp();
+                };
+                headerButtonsContainer.appendChild(homeButton);
+
 
                 // User Profile and Logout Dropdown
                 const userProfileContainer = document.createElement('div');
@@ -785,13 +1142,24 @@
                     isAdminUser = false;
                     isAnonymousUser = false;
                     userEmail = null;
+                    currentView = 'downloads'; // Reset view on logout
                     renderApp(); // Re-render to show auth page
                 };
             }
         }
 
         if (isAuthenticated) {
-            renderDownloadsSection();
+            if (currentView === 'downloads') {
+                renderDownloadsSection();
+            } else if (currentView === 'tutorials') {
+                renderTutorialsSection();
+            } else if (currentView === 'admin' && isAdminUser) {
+                renderAdminSection();
+            } else {
+                // Fallback if somehow not admin but trying to access admin view
+                currentView = 'downloads';
+                renderDownloadsSection();
+            }
         } else {
             // User is not authenticated, show auth page
             renderAuthPage();
