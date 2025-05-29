@@ -51,6 +51,45 @@
             transform: translateY(0);
             opacity: 1;
         }
+
+        /* Custom Alert Modal Styles */
+        #custom-alert-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001; /* Higher than other modals */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        #custom-alert-modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #custom-alert-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #custom-alert-modal.open #custom-alert-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -125,48 +164,180 @@
     </div>
 </div>
 
+<div id="custom-alert-modal" class="modal-overlay">
+    <div id="custom-alert-content" class="modal-content">
+        <p id="custom-alert-message" class="text-lg text-gray-800 mb-6"></p>
+        <button id="custom-alert-ok-button" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">OK</button>
+    </div>
+</div>
+
 <script type="module">
-    // This code is designed to work seamlessly when deployed to GitHub Pages.
-    // All external resources are loaded via CDNs, and internal links/paths are handled within the single HTML file.
+    // Firebase SDK imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- IMPORTANT: YOUR FIREBASE CONFIGURATION GOES HERE ---
+    // Replace the placeholder values below with your actual config from Firebase Console:
+    // Go to Firebase Console -> Project settings (gear icon) -> General -> Your apps -> Web app -> Firebase SDK snippet -> Config
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",           // <--- PASTE YOUR API KEY HERE
+        authDomain: "YOUR_AUTH_DOMAIN",   // <--- PASTE YOUR AUTH DOMAIN HERE
+        projectId: "YOUR_PROJECT_ID",     // <--- PASTE YOUR PROJECT ID HERE
+        storageBucket: "YOUR_STORAGE_BUCKET", // <--- PASTE YOUR STORAGE BUCKET HERE
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- PASTE YOUR MESSAGING SENDER ID HERE
+        appId: "YOUR_APP_ID"              // <--- PASTE YOUR APP ID HERE
+    };
+
+    // Initialize Firebase
+    let app, db, auth;
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } catch (e) {
+        console.error("Firebase initialization failed:", e);
+        // Using customAlert instead of window.alert
+        customAlert("Failed to initialize Firebase. Please check your console for errors and ensure your firebaseConfig is correct.");
+    }
 
     // Define the email address where access requests will be sent
     const REQUEST_RECIPIENT_EMAIL = 'SDH_REQ@mail.com';
     // Define the email address for file requests
-    const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com'; // New constant for file requests
+    const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com';
     // Define the website version
-    const WEBSITE_VERSION = 'v1.0.6'; // Updated version
+    const WEBSITE_VERSION = 'v1.0.8'; // Version remains consistent as the functionality is the same
 
     // Local authentication state
     let isAuthenticated = false;
-    let isAdminUser = false; // Flag for admin access
-    let isAnonymousUser = false; // Flag for anonymous access
-    let userEmail = null; // Store the email if authenticated via specific email
+    let isAdminUser = false;
+    let userEmail = null;
+    let currentUserId = null; // Store Firebase User ID
     let currentView = 'downloads'; // 'downloads' or 'tutorials' or 'admin'
 
-    // Persistent storage for users (simulated)
-    // Structure: [{ email: 'admin@sdh.com', isAdmin: true }, { email: 'user@sdh.com', isAdmin: false }]
-    let ALLOWED_USERS = loadUsersFromLocalStorage();
+    // Allowed users from Firestore (this will be populated by the onSnapshot listener)
+    let ALLOWED_USERS = [];
 
-    function loadUsersFromLocalStorage() {
-        try {
-            const usersJson = localStorage.getItem('allowedUsers');
-            if (usersJson) {
-                const users = JSON.parse(usersJson);
-                // Basic validation to ensure it's an array of objects with email and isAdmin
-                if (Array.isArray(users) && users.every(u => typeof u.email === 'string' && typeof u.isAdmin === 'boolean')) {
-                    return users;
-                }
-            }
-        } catch (e) {
-            console.error("Error loading users from localStorage:", e);
-            // Fallback to default if storage is corrupted
-        }
-        // Default users if no data or invalid data in localStorage
-        return [{ email: 'admin@sdh.com', isAdmin: true }, { email: 'user@sdh.com', isAdmin: false }];
+    // Firestore Collection Reference
+    let usersCollectionRef;
+    if (db && firebaseConfig.projectId && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
+        // Construct the collection path using the actual projectId from your config
+        usersCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/public/data/allowedUsers`);
+    } else {
+        console.warn("Firebase projectId is not set or is still a placeholder. Firestore collection reference not fully initialized.");
     }
 
-    function saveUsersToLocalStorage() {
-        localStorage.setItem('allowedUsers', JSON.stringify(ALLOWED_USERS));
+    /**
+     * Custom alert function to replace window.alert
+     * @param {string} message - The message to display in the alert.
+     */
+    function customAlert(message) {
+        const alertModal = document.getElementById('custom-alert-modal');
+        const alertMessage = document.getElementById('custom-alert-message');
+        const alertOkButton = document.getElementById('custom-alert-ok-button');
+
+        alertMessage.textContent = message;
+        alertModal.classList.add('open');
+
+        // Close when OK is clicked or outside is clicked
+        const closeAlert = () => {
+            alertModal.classList.remove('open');
+            alertOkButton.removeEventListener('click', closeAlert);
+            alertModal.removeEventListener('click', handleOutsideClick);
+        };
+
+        const handleOutsideClick = (e) => {
+            if (e.target === alertModal) {
+                closeAlert();
+            }
+        };
+
+        alertOkButton.addEventListener('click', closeAlert);
+        alertModal.addEventListener('click', handleOutsideClick);
+    }
+
+    // Replace default alert with customAlert
+    window.alert = customAlert;
+
+    /**
+     * Sets up a real-time listener for the allowed users from Firestore.
+     * This function will be called once authentication is ready and usersCollectionRef is valid.
+     */
+    function setupAllowedUsersListener() {
+        if (!usersCollectionRef) {
+            console.error("Firestore users collection reference is not initialized. Cannot set up listener.");
+            return;
+        }
+
+        onSnapshot(usersCollectionRef, (snapshot) => {
+            const users = [];
+            snapshot.forEach(doc => {
+                users.push({ id: doc.id, ...doc.data() });
+            });
+            ALLOWED_USERS = users;
+            console.log("Allowed users updated from Firestore:", ALLOWED_USERS);
+
+            // Re-evaluate current user's admin status and re-render if necessary
+            // This handles cases where admin status changes while user is logged in
+            if (auth.currentUser) { // Check if a Firebase user is active
+                const currentFirebaseUserEmail = auth.currentUser.email; // Get email from Firebase Auth
+                const currentFirebaseUserId = auth.currentUser.uid;
+
+                let userFoundInAllowedList = false;
+                if (currentFirebaseUserEmail) {
+                    const currentUserData = ALLOWED_USERS.find(u => u.email === currentFirebaseUserEmail);
+                    if (currentUserData) {
+                        userFoundInAllowedList = true;
+                        // Update local state based on Firestore data
+                        if (isAuthenticated !== true || userEmail !== currentUserData.email || isAdminUser !== currentUserData.isAdmin) {
+                            isAuthenticated = true;
+                            userEmail = currentUserData.email;
+                            isAdminUser = currentUserData.isAdmin;
+                            currentUserId = currentFirebaseUserId;
+                            console.log("User state updated from Firestore: Authenticated, Admin:", isAdminUser);
+                            renderApp(); // Re-render if state changed
+                        }
+                    }
+                } else if (auth.currentUser.isAnonymous) {
+                    // Handle anonymous user: always authenticated, never admin via email list
+                    if (isAuthenticated !== true || isAdminUser !== false || userEmail !== null) {
+                        isAuthenticated = true;
+                        userEmail = null; // No email for anonymous
+                        isAdminUser = false;
+                        currentUserId = currentFirebaseUserId;
+                        console.log("Anonymous user state updated from Firestore.");
+                        renderApp(); // Re-render if state changed
+                    }
+                }
+
+                // If a non-anonymous Firebase user is no longer in ALLOWED_USERS, log them out
+                if (currentFirebaseUserEmail && !userFoundInAllowedList) {
+                    console.warn("Firebase user's email no longer in ALLOWED_USERS. Logging out.");
+                    auth.signOut().then(() => {
+                        customAlert("Your access has been revoked. You have been logged out.");
+                    }).catch(error => {
+                        console.error("Error signing out after access revoked:", error);
+                    });
+                }
+            } else {
+                // If no Firebase user, ensure local state reflects logged out
+                if (isAuthenticated === true) {
+                    isAuthenticated = false;
+                    isAdminUser = false;
+                    userEmail = null;
+                    currentUserId = null;
+                    renderApp(); // Re-render if state changed
+                }
+            }
+
+            // If the manage users modal is open, re-render its list to show latest data
+            if (manageUsersModal.classList.contains('open')) {
+                renderUserList();
+            }
+        }, (error) => {
+            console.error("Error listening to allowed users:", error);
+            customAlert("Error fetching user data from database. Please check your internet connection and Firebase rules.");
+        });
     }
 
 
@@ -548,9 +719,15 @@
             return;
         }
 
-        const originalButtonText = document.getElementById(`generate-desc-button-${itemId}`).innerHTML;
-        document.getElementById(`generate-desc-button-${itemId}`).disabled = true;
-        document.getElementById(`generate-desc-button-${itemId}`).innerHTML = `
+        const generateButton = document.getElementById(`generate-desc-button-${itemId}`);
+        if (!generateButton) {
+            console.error(`Generate button for item ID ${itemId} not found.`);
+            return;
+        }
+
+        const originalButtonText = generateButton.innerHTML;
+        generateButton.disabled = true;
+        generateButton.innerHTML = `
             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -591,15 +768,15 @@
                 renderDownloadsSection(); // Re-render to show the updated description
             } else {
                 console.warn("Gemini API response structure unexpected:", result);
-                alert("Failed to generate description: Unexpected API response.");
+                customAlert("Failed to generate description: Unexpected API response.");
             }
         } catch (error) {
             console.error("Error generating description:", error);
-            alert(`Failed to generate description: ${error.message}. Please try again.`);
+            customAlert(`Failed to generate description: ${error.message}. Please try again.`);
         } finally {
             // Revert button state even if there's an error
-            document.getElementById(`generate-desc-button-${itemId}`).disabled = false;
-            document.getElementById(`generate-desc-button-${itemId}`).innerHTML = originalButtonText;
+            generateButton.disabled = false;
+            generateButton.innerHTML = originalButtonText;
         }
     }
 
@@ -642,33 +819,62 @@
         `;
 
         // Attach event listener for the access button
-        document.getElementById('access-button').onclick = () => {
+        document.getElementById('access-button').onclick = async () => {
             const email = document.getElementById('auth-email').value.toLowerCase();
             const errorMessage = document.getElementById('auth-error-message');
 
+            // Find user in the ALLOWED_USERS list fetched from Firestore
             const user = ALLOWED_USERS.find(u => u.email === email);
 
             if (user) {
-                isAuthenticated = true;
-                isAnonymousUser = false;
-                userEmail = email;
-                isAdminUser = user.isAdmin; // Set admin flag based on stored data
-                errorMessage.classList.add('hidden');
-                currentView = 'downloads'; // Default to downloads after login
-                renderApp(); // Re-render to show downloads
+                // If email/password provider is enabled, you'd use signInWithEmailAndPassword here.
+                // For this example, we're relying on Firebase Auth's anonymous or existing session.
+                // The email input is primarily for checking against our Firestore-managed allowed list.
+                // If you want actual email/password login, you'd need to add that Firebase Auth call.
+                if (auth.currentUser && auth.currentUser.email === email) {
+                     // Already signed in with this email via Firebase Auth
+                     // onAuthStateChanged will handle state update
+                     errorMessage.classList.add('hidden');
+                     console.log("Already signed in with this email.");
+                } else {
+                    // This is where you would integrate signInWithEmailAndPassword if you enabled it.
+                    // For now, we'll just set internal state based on the allowed list,
+                    // assuming the Firebase Auth state is handled by onAuthStateChanged for anonymous or existing sessions.
+                    isAuthenticated = true;
+                    userEmail = email;
+                    isAdminUser = user.isAdmin;
+                    errorMessage.classList.add('hidden');
+                    currentView = 'downloads';
+                    renderApp();
+                    console.log("Access granted based on allowed email list (not Firebase Auth login).");
+                }
             } else {
                 errorMessage.textContent = "Invalid email address for access. Please try again.";
                 errorMessage.classList.remove('hidden');
             }
         };
 
-        document.getElementById('anonymous-access-button').onclick = () => {
-            isAuthenticated = true;
-            isAnonymousUser = true;
-            isAdminUser = false;
-            userEmail = null; // No specific email for anonymous users
-            currentView = 'downloads'; // Default to downloads after anonymous login
-            renderApp(); // Re-render to show downloads (as anonymous)
+        document.getElementById('anonymous-access-button').onclick = async () => {
+            try {
+                if (auth) {
+                    await signInAnonymously(auth);
+                    // onAuthStateChanged listener will handle updating isAuthenticated, currentUserId, etc.
+                    console.log("Attempting anonymous sign-in via Firebase Auth.");
+                } else {
+                    console.warn("Firebase Auth not initialized. Cannot sign in anonymously via Firebase.");
+                    customAlert("Anonymous access is not available. Firebase is not configured correctly.");
+                    // Fallback for extremely limited functionality if Firebase is completely down
+                    isAuthenticated = true;
+                    userEmail = null;
+                    isAdminUser = false;
+                    currentUserId = crypto.randomUUID(); // Generate a local ID if no Firebase UID
+                    currentView = 'downloads';
+                    renderApp();
+                }
+            } catch (error) {
+                console.error("Error signing in anonymously:", error);
+                customAlert("Failed to sign in anonymously. Please try again.");
+            }
         };
 
         // Attach event listener for the show request form button
@@ -926,7 +1132,11 @@
     }
 
     // --- User Management Modal Functions ---
-    function showManageUsersModal() {
+    async function showManageUsersModal() {
+        if (!auth.currentUser || !isAdminUser) { // Ensure user is authenticated and is admin
+            customAlert("You must be an admin to manage users.");
+            return;
+        }
         manageUsersModal.classList.add('open');
         renderUserList(); // Populate the list when modal opens
     }
@@ -943,18 +1153,22 @@
         ALLOWED_USERS.forEach(user => {
             const listItem = document.createElement('li');
             listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200';
-            listItem.innerHTML = `
-                <span class="font-medium text-gray-800 break-all mr-2">${user.email}</span>
+            // Use the user's actual email from the Firestore document for display
+            const displayEmail = user.email;
+            const docId = user.id; // The Firestore document ID
+
+            li.innerHTML = `
+                <span class="font-medium text-gray-800 break-all mr-2">${displayEmail} ${user.isAdmin ? '(Admin)' : ''}</span>
                 <div class="flex items-center space-x-3">
-                    ${user.email === userEmail ? `
+                    ${displayEmail === userEmail ? `
                         <span class="text-gray-500 text-sm italic">(Current User)</span>
                     ` : `
                         <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" data-email="${user.email}" ${user.isAdmin ? 'checked' : ''} class="toggle-admin-checkbox sr-only" />
+                            <input type="checkbox" data-email="${displayEmail}" data-docid="${docId}" ${user.isAdmin ? 'checked' : ''} class="toggle-admin-checkbox sr-only" />
                             <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             <span class="ml-2 text-sm font-medium text-gray-900">Admin</span>
                         </label>
-                        <button data-email="${user.email}" class="remove-user-button px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded-md hover:bg-red-600 transition-colors">
+                        <button data-email="${displayEmail}" data-docid="${docId}" class="remove-user-button px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded-md hover:bg-red-600 transition-colors">
                             Remove
                         </button>
                     `}
@@ -963,19 +1177,24 @@
             userListElement.appendChild(listItem);
         });
 
-        // Attach event listeners to newly created buttons/checkboxes
+        // Add event listeners to newly created buttons/checkboxes
         userListElement.querySelectorAll('.remove-user-button').forEach(button => {
-            button.onclick = (event) => removeUser(event.target.dataset.email);
+            button.onclick = (event) => removeUser(event.target.dataset.docid, event.target.dataset.email);
         });
 
         userListElement.querySelectorAll('.toggle-admin-checkbox').forEach(checkbox => {
-            checkbox.onchange = (event) => toggleAdminStatus(event.target.dataset.email);
+            checkbox.onchange = (event) => toggleAdminStatus(event.target.dataset.docid, event.target.dataset.email);
         });
     }
 
-    function addUser() {
+    async function addUser() {
         const email = newUserEmailInput.value.toLowerCase().trim();
         const isAdmin = newUserIsAdminCheckbox.checked;
+
+        if (!auth.currentUser || !isAdminUser) {
+            customAlert("You must be logged in as an admin to add users.");
+            return;
+        }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
@@ -984,69 +1203,89 @@
             return;
         }
 
+        // Check if email already exists in ALLOWED_USERS (from Firestore snapshot)
         if (ALLOWED_USERS.some(u => u.email === email)) {
             addUserMessage.textContent = "This email address already exists.";
             addUserMessage.className = "text-red-500 text-sm mt-1";
             return;
         }
 
-        ALLOWED_USERS.push({ email, isAdmin });
-        saveUsersToLocalStorage();
-        renderUserList(); // Update the displayed list
-        addUserMessage.textContent = `User "${email}" added successfully!`;
-        addUserMessage.className = "text-green-600 text-sm mt-1";
-        newUserEmailInput.value = '';
-        newUserIsAdminCheckbox.checked = false;
-
-        // If the added user is the current logged-in user, and their admin status changed
-        if (userEmail === email) {
-            isAdminUser = isAdmin;
-            renderApp(); // Re-render app to update header if admin status changed for current user
+        try {
+            // Use sanitized email as the document ID for easy lookup and uniqueness
+            const docId = email.replace(/\./g, '_');
+            await setDoc(doc(usersCollectionRef, docId), {
+                email: email,
+                isAdmin: isAdmin
+            });
+            addUserMessage.textContent = `User "${email}" added successfully!`;
+            addUserMessage.className = "text-green-600 text-sm mt-1";
+            newUserEmailInput.value = '';
+            newUserIsAdminCheckbox.checked = false;
+            // loadUsers() will be triggered by the onSnapshot listener automatically
+        } catch (error) {
+            console.error("Error adding user to Firestore:", error);
+            addUserMessage.textContent = `Failed to add user: ${error.message}`;
+            addUserMessage.className = "text-red-500 text-sm mt-1";
         }
     }
 
-    function removeUser(emailToRemove) {
-        if (emailToRemove === 'admin@sdh.com' && ALLOWED_USERS.find(u => u.email === 'admin@sdh.com' && u.isAdmin)) {
-            alert("The primary admin user 'admin@sdh.com' cannot be removed if it's the only admin. Please ensure there's at least one other admin.");
+    async function removeUser(docIdToRemove, emailToRemove) {
+        if (!auth.currentUser || !isAdminUser) {
+            customAlert("You must be logged in as an admin to remove users.");
+            return;
+        }
+
+        if (emailToRemove === 'admin@sdh.com' && ALLOWED_USERS.filter(u => u.isAdmin).length === 1) {
+            customAlert("The primary admin user 'admin@sdh.com' cannot be removed if it's the only admin. Please ensure there's at least one other admin.");
             return;
         }
         if (emailToRemove === userEmail) {
-            alert("You cannot remove your own account while logged in.");
+            customAlert("You cannot remove your own account while logged in.");
             return;
         }
 
-        const initialLength = ALLOWED_USERS.length;
-        ALLOWED_USERS = ALLOWED_USERS.filter(user => user.email !== emailToRemove);
-        if (ALLOWED_USERS.length < initialLength) {
-            saveUsersToLocalStorage();
-            renderUserList(); // Update the displayed list
-            // Potentially re-render the app if an admin user who was not the current one is removed
-            // and their removal affects overall user experience (e.g., if they were the only other admin)
+        try {
+            await deleteDoc(doc(usersCollectionRef, docIdToRemove));
+            customAlert(`User "${emailToRemove}" removed successfully.`);
+            // loadUsers() will be triggered by the onSnapshot listener automatically
+        } catch (error) {
+            console.error("Error removing user from Firestore:", error);
+            customAlert(`Failed to remove user: ${error.message}`);
         }
     }
 
-    function toggleAdminStatus(emailToToggle) {
-        const userIndex = ALLOWED_USERS.findIndex(u => u.email === emailToToggle);
-        if (userIndex !== -1) {
-            const currentAdminStatus = ALLOWED_USERS[userIndex].isAdmin;
+    async function toggleAdminStatus(docIdToToggle, emailToToggle) {
+        if (!auth.currentUser || !isAdminUser) {
+            customAlert("You must be logged in as an admin to change user roles.");
+            renderUserList(); // Revert checkbox state in UI
+            return;
+        }
 
-            // Prevent removing admin status from the only admin
-            if (currentAdminStatus && emailToToggle === 'admin@sdh.com' && ALLOWED_USERS.filter(u => u.isAdmin).length === 1) {
-                alert("This is the last admin account. You cannot revoke its admin access.");
-                // Revert checkbox state in UI if it was programmatically toggled
-                renderUserList();
-                return;
-            }
+        const userDoc = ALLOWED_USERS.find(u => u.id === docIdToToggle);
 
-            ALLOWED_USERS[userIndex].isAdmin = !currentAdminStatus;
-            saveUsersToLocalStorage();
-            renderUserList(); // Update the displayed list
+        if (!userDoc) {
+            customAlert("User not found in current list.");
+            renderUserList(); // Revert checkbox state
+            return;
+        }
 
-            // If the toggled user is the current logged-in user, update isAdminUser state
-            if (userEmail === emailToToggle) {
-                isAdminUser = ALLOWED_USERS[userIndex].isAdmin;
-                renderApp(); // Re-render app to update header/access
-            }
+        const newAdminStatus = !userDoc.isAdmin;
+
+        // Prevent removing admin status from the only admin
+        if (userDoc.isAdmin && emailToToggle === 'admin@sdh.com' && ALLOWED_USERS.filter(u => u.isAdmin).length === 1) {
+            customAlert("This is the last admin account. You cannot revoke its admin access.");
+            renderUserList(); // Revert checkbox state
+            return;
+        }
+
+        try {
+            await setDoc(doc(usersCollectionRef, docIdToToggle), { isAdmin: newAdminStatus }, { merge: true });
+            customAlert(`Admin status for "${emailToToggle}" updated to ${newAdminStatus}.`);
+            // loadUsers() will be triggered by the onSnapshot listener automatically
+        } catch (error) {
+            console.error("Error toggling admin status in Firestore:", error);
+            customAlert(`Failed to update admin status: ${error.message}`);
+            renderUserList(); // Revert checkbox state on error
         }
     }
 
@@ -1068,7 +1307,7 @@
 
     // Main render function
     function renderApp() {
-        console.log("renderApp called. User is authenticated:", isAuthenticated, "isAdminUser:", isAdminUser, "currentView:", currentView);
+        console.log("renderApp called. User is authenticated:", isAuthenticated, "isAdminUser:", isAdminUser, "currentView:", currentView, "currentUserId:", currentUserId);
         // Clear header buttons always, as they are dynamic based on auth state
         if (headerButtonsContainer) {
             headerButtonsContainer.innerHTML = '';
@@ -1132,6 +1371,9 @@
                 // Changed w-48 to w-full to match the parent's width dynamically
                 dropdownMenu.className = "absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
                 dropdownMenu.innerHTML = `
+                    <div class="block w-full text-left px-8 py-4 text-sm text-gray-700">
+                        User ID: <span class="font-bold break-all">${currentUserId || 'N/A'}</span>
+                    </div>
                     <button id="logout-button" class="block w-full text-left px-8 py-4 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:scale-105">
                         Logout
                     </button>
@@ -1142,13 +1384,11 @@
                 headerButtonsContainer.appendChild(userProfileContainer);
 
                 // Attach event listener for the logout button inside the dropdown
-                document.getElementById('logout-button').onclick = () => {
-                    isAuthenticated = false;
-                    isAdminUser = false;
-                    isAnonymousUser = false;
-                    userEmail = null;
-                    currentView = 'downloads'; // Reset view on logout
-                    renderApp(); // Re-render to show auth page
+                document.getElementById('logout-button').onclick = async () => {
+                    if (auth) {
+                        await signOut(auth); // Sign out from Firebase
+                    }
+                    // onAuthStateChanged will handle the state reset and re-render
                 };
             }
         }
@@ -1171,18 +1411,78 @@
         }
     }
 
-    // Initial render when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initial Firebase Auth and App Render Logic
+    document.addEventListener('DOMContentLoaded', async () => {
         console.log("DOMContentLoaded fired");
-        try {
-            renderApp();
-        } catch (error) {
-            console.error("Error during initial app rendering:", error);
-            // Optionally display a user-friendly error message on the page
-            if (mainContentArea) {
-                mainContentArea.innerHTML = `<div class="text-red-600 text-center text-xl mt-10">An error occurred while loading the page. Please try again later. Check the console for more details.</div>`;
+
+        if (auth) {
+            // This listener is crucial. It fires on page load if a user is already signed in,
+            // and whenever the user's sign-in state changes (login, logout, anonymous sign-in).
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    // If user has an email (not anonymous), try to find them in ALLOWED_USERS
+                    if (user.email) {
+                        const currentUserData = ALLOWED_USERS.find(u => u.email === user.email);
+                        if (currentUserData) {
+                            isAuthenticated = true;
+                            userEmail = currentUserData.email;
+                            isAdminUser = currentUserData.isAdmin;
+                            console.log("Firebase user (email) authenticated:", user.email, "Admin:", isAdminUser);
+                        } else {
+                            // Firebase user with email but not in our allowed list
+                            isAuthenticated = false; // Treat as not authorized for access
+                            userEmail = null;
+                            isAdminUser = false;
+                            console.warn("Firebase user with email not found in ALLOWED_USERS. Logging out.");
+                            await signOut(auth); // Force logout if not in allowed list
+                            customAlert("Your account is not authorized to access this site. Please request access.");
+                            renderApp(); // Re-render to show auth page
+                            return; // Exit to prevent further rendering with incorrect state
+                        }
+                    } else if (user.isAnonymous) {
+                        // Anonymous Firebase user
+                        isAuthenticated = true;
+                        userEmail = null; // No email for anonymous
+                        isAdminUser = false; // Anonymous users are never admins from this list
+                        console.log("Anonymous Firebase user authenticated.");
+                    }
+                } else {
+                    // No user is signed in to Firebase
+                    isAuthenticated = false;
+                    isAdminUser = false;
+                    userEmail = null;
+                    currentUserId = null;
+                    console.log("No user signed in to Firebase.");
+                }
+
+                // After auth state is determined, set up Firestore listener and render app
+                // Only set up listener if db and usersCollectionRef are valid
+                if (db && usersCollectionRef) {
+                    setupAllowedUsersListener(); // Start listening for user changes
+                } else {
+                    console.error("Firebase or Firestore collection not initialized. Cannot set up listener.");
+                }
+                renderApp(); // Initial render based on auth state
+            });
+
+            // Attempt anonymous sign-in on page load if no user is currently authenticated
+            // This ensures a basic level of access even if not explicitly logged in with an email.
+            if (!auth.currentUser) {
+                try {
+                    await signInAnonymously(auth);
+                    console.log("Attempting anonymous sign-in on page load.");
+                } catch (error) {
+                    console.error("Error during anonymous sign-in on page load:", error);
+                    customAlert("Failed to sign in anonymously automatically. You may need to manually sign in.");
+                }
             }
+        } else {
+            console.error("Firebase Auth is not initialized. Cannot perform authentication.");
+            // Render app in unauthenticated state if Firebase is not available
+            renderApp();
         }
+
 
         // Attach event listener for the new "Request File" button after initial render
         const requestFileButton = document.getElementById('request-file-button');
