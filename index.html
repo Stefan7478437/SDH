@@ -43,6 +43,17 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            display: flex; /* Use flex to align logo text and version */
+            align-items: baseline; /* Align baseline for better visual */
+            gap: 0.5rem; /* Space between logo and version */
+        }
+        header .logo .version-indicator {
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 400; /* normal font weight */
+            color: #6b7280; /* gray-500 */
+            -webkit-text-fill-color: initial; /* Override transparent text fill for version */
+            background-image: none; /* Remove gradient for version */
+            text-shadow: none; /* Remove shadow for version */
         }
         main {
             flex-grow: 1;
@@ -124,7 +135,10 @@
 <body>
     <div id="app-root">
         <header>
-            <div class="logo">SDH</div>
+            <div class="logo">
+                SDH
+                <span id="website-version" class="version-indicator"></span>
+            </div>
             <div id="header-buttons-container" class="flex items-center space-x-4">
                 </div>
         </header>
@@ -133,7 +147,7 @@
             </main>
 
         <footer>
-            <p>&copy; <span id="current-year"></span> SDH. All rights reserved. Version: <span id="website-version"></span></p>
+            <p>&copy; <span id="current-year"></span> SDH. All rights reserved.</p>
             <button id="request-file-button" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
                 Request a File
             </button>
@@ -187,7 +201,7 @@
         // Define the email address for file requests
         const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com';
         // Define the website version
-        const WEBSITE_VERSION = 'v1.0.9-standalone-email-auth-anon-enter-fix-logo'; // Updated version for standalone
+        const WEBSITE_VERSION = 'v1.0.11'; // Updated version for standalone
 
         // Local authentication state (non-persistent across browser restarts)
         let isAuthenticated = false;
@@ -352,11 +366,14 @@
             let filename = '';
             if (pathSegments.length > 0) {
                 if (pathSegments[pathSegments.length - 1] === 'file' && pathSegments.length > 1) {
-                    filename = pathSegments[pathSegments.length - 2]; // Corrected index
+                    filename = pathSegments[pathSegments.length - 2];
                 } else {
                     filename = pathSegments[pathSegments.length - 1];
                 }
             }
+            // Ensure filename is a string before splitting, even if it somehow became undefined
+            filename = String(filename || '');
+
             const parts = filename.split('.');
             let extension = '';
             if (parts.length > 1) {
@@ -418,9 +435,17 @@
         if (currentYearSpan) {
             currentYearSpan.textContent = new Date().getFullYear();
         }
+
+        // Debugging logs for version indicator
+        console.log("websiteVersionSpan element:", websiteVersionSpan);
+        console.log("WEBSITE_VERSION constant:", WEBSITE_VERSION);
         if (websiteVersionSpan) {
             websiteVersionSpan.textContent = WEBSITE_VERSION;
+            console.log("websiteVersionSpan textContent set to:", websiteVersionSpan.textContent);
+        } else {
+            console.error("Website version span element (id='website-version') not found!");
         }
+
 
         /**
          * Generates a detailed description using the Gemini API.
