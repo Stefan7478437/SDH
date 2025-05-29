@@ -3,314 +3,1061 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDH</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233B82F6'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E" type="image/svg+xml">
+    <title>SDH Downloads</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for the Inter font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-
-        /* Modal specific styles */
-        .modal-overlay {
+        #app-root {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        header {
+            background-color: #ffffff;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        header .logo {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 800; /* font-extrabold */
+            /* Directly apply the gradient colors */
+            background-image: linear-gradient(to right, #3b82f6, #a855f7); /* blue-500 to purple-500 */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        main {
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        footer {
+            background-color: #2d3748; /* gray-800 */
+            color: #e2e8f0; /* gray-200 */
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-size: 0.875rem; /* text-sm */
+            border-top: 4px solid #3b82f6; /* blue-500 */
+        }
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.75);
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-
-        .modal-overlay.open {
+        .modal.open {
             opacity: 1;
             visibility: visible;
         }
-
         .modal-content {
-            background-color: white;
+            background-color: #ffffff;
             padding: 2rem;
-            border-radius: 1rem;
+            border-radius: 0.75rem; /* rounded-xl */
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
             position: relative;
-            max-width: 90%;
-            width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
             transform: translateY(-20px);
-            opacity: 0;
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transition: transform 0.3s ease;
         }
-
-        .modal-overlay.open .modal-content {
+        .modal.open .modal-content {
             transform: translateY(0);
-            opacity: 1;
         }
-
-        /* Custom Alert Modal Styles */
-        #custom-alert-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001; /* Higher than other modals */
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280; /* gray-500 */
         }
-
-        #custom-alert-modal.open {
-            opacity: 1;
-            visibility: visible;
+        .modal-close-button:hover {
+            color: #374151; /* gray-700 */
         }
-
-        #custom-alert-content {
+        .toggle-admin-checkbox:checked + div {
+            background-color: #2563eb; /* blue-600 */
+        }
+        .toggle-admin-checkbox:checked + div:after {
+            transform: translateX(100%);
+        }
+        .toggle-admin-checkbox + div:after {
             background-color: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            transform: translateY(-20px);
-            opacity: 0;
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-        }
-
-        #custom-alert-modal.open #custom-alert-content {
-            transform: translateY(0);
-            opacity: 1;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 9999px; /* rounded-full */
+            height: 1.25rem; /* h-5 */
+            width: 1.25rem; /* w-5 */
+            transition: transform 0.2s ease;
         }
     </style>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-<div id="app-root" class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 font-inter text-gray-800 antialiased">
-    <header class="bg-white shadow-xl py-6 px-4 sm:px-6 lg:px-8 rounded-b-3xl">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between">
-            <h1 class="text-5xl font-extrabold text-gray-900 mb-4 sm:mb-0">
-                <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-800 drop-shadow-md">
-                    SDH
-                </span>
-                <span id="website-version" class="ml-4 text-xl font-semibold text-gray-600"></span>
-            </h1>
-            <div class="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0" id="header-buttons-container">
+    <div id="app-root">
+        <header>
+            <div class="logo">SDH</div>
+            <div id="header-buttons-container" class="flex items-center space-x-4">
                 </div>
-        </div>
-    </header>
+        </header>
 
-    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8" id="main-content-area">
-        </main>
+        <main id="main-content-area">
+            </main>
 
-    <section class="bg-blue-600 text-white rounded-xl p-8 text-center shadow-lg mt-12">
-        <h2 class="text-3xl font-bold mb-4">Can't find what you're looking for?</h2>
-        <button id="request-file-button" class="inline-flex items-center justify-center px-8 py-4 border border-white text-base font-medium rounded-xl shadow-sm text-blue-600 bg-white hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105">
-            Request File
-        </button>
-    </section>
+        <footer>
+            <p>&copy; <span id="current-year"></span> SDH. All rights reserved. Version: <span id="website-version"></span></p>
+            <button id="request-file-button" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                Request a File
+            </button>
+        </footer>
 
-    <footer>
-        <div class="max-w-7xl mx-auto text-center text-sm">
-            <p>&copy; <span id="current-year"></span> SDH. All rights reserved.</p>
-            <p class="mt-2">
-                <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200 mx-2">Privacy Policy</a> |
-                <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200 mx-2">Terms of Service</a>
-            </p>
-        </div>
-    </footer>
-
-    <div class="fixed bottom-4 right-4 bg-gray-800 text-white text-xs px-2 py-1 rounded-full z-50">
-        <span class="block sm:hidden">XS</span>
-        <span class="hidden sm:block md:hidden">SM</span>
-        <span class="hidden md:block lg:hidden">LG</span>
-        <span class="hidden lg:block xl:hidden">XL</span>
-        <span class="hidden xl:block 2xl:hidden">2XL</span>
-    </div>
-</div>
-
-<div id="manage-users-modal" class="modal-overlay">
-    <div class="modal-content">
-        <button id="close-manage-users-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold">
-            &times;
-        </button>
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Manage Users</h2>
-
-        <div class="mb-6 border-b pb-4">
-            <h3 class="text-xl font-semibold mb-3">Add New User</h3>
-            <input type="email" id="new-user-email" placeholder="New user email" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" />
-            <div class="flex items-center mb-3">
-                <input type="checkbox" id="new-user-is-admin" class="mr-2 h-5 w-5 text-blue-600 rounded" />
-                <label for="new-user-is-admin" class="text-gray-700">Grant Admin Access</label>
+        <div id="custom-alert-modal" class="modal">
+            <div class="modal-content">
+                <button id="custom-alert-close-button" class="modal-close-button">&times;</button>
+                <h3 class="text-xl font-semibold mb-4">Notification</h3>
+                <p id="custom-alert-message" class="mb-6"></p>
+                <button id="custom-alert-ok-button" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                    OK
+                </button>
             </div>
-            <p id="add-user-message" class="text-sm mt-1 mb-2"></p>
-            <button id="add-user-button" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Add User</button>
         </div>
 
-        <div>
-            <h3 class="text-xl font-semibold mb-3">Current Users</h3>
-            <ul id="user-list" class="space-y-3">
-                </ul>
+        <div id="manage-users-modal" class="modal">
+            <div class="modal-content">
+                <button id="close-manage-users-modal" class="modal-close-button">&times;</button>
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">Manage Users (Admin Only)</h3>
+                <p class="text-red-500 text-sm mb-4">
+                    NOTE: This is a standalone website with no database. User management here is for demonstration purposes only and will not persist.
+                </p>
+                <div class="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                    <h4 class="text-lg font-semibold text-blue-800 mb-2">Add New User (Insecure & Non-Persistent)</h4>
+                    <input type="email" id="new-user-email" placeholder="New User Email" class="w-full px-3 py-2 rounded-md border border-gray-300 mb-2" />
+                    <label class="inline-flex items-center mb-2">
+                        <input type="checkbox" id="new-user-is-admin" class="form-checkbox h-5 w-5 text-blue-600 rounded" />
+                        <span class="ml-2 text-gray-700">Is Admin</span>
+                    </label>
+                    <p id="add-user-message" class="text-sm mt-1"></p>
+                    <button id="add-user-button" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                        Add User
+                    </button>
+                </div>
+
+                <h4 class="text-xl font-semibold text-gray-800 mb-4">Current Users (Non-Persistent)</h4>
+                <ul id="user-list" class="space-y-3 max-h-60 overflow-y-auto border border-gray-200 p-3 rounded-lg">
+                    </ul>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="custom-alert-modal" class="modal-overlay">
-    <div id="custom-alert-content" class="modal-content">
-        <p id="custom-alert-message" class="text-lg text-gray-800 mb-6"></p>
-        <button id="custom-alert-ok-button" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">OK</button>
-    </div>
-</div>
+    <script>
+        // --- Frontend JavaScript for SDH Website (Standalone Version) ---
 
-<script type="module">
-    // Firebase SDK imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        // --- INSECURE: HARDCODED EMAIL FOR ACCESS ---
+        // Anyone can view this in the page source code. DO NOT USE FOR SENSITIVE DATA.
+        const HARDCODED_ACCESS_EMAIL = "stefan.mitarca@gmail.com"; // This email grants access and admin rights
+
+        // Define the email address for file requests
+        const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com';
+        // Define the website version
+        const WEBSITE_VERSION = 'v1.0.9-standalone-email-auth-anon-enter-fix-logo'; // Updated version for standalone
+
+        // Local authentication state (non-persistent across browser restarts)
+        let isAuthenticated = false;
+        let isAdminUser = false;
+        let userEmail = null;
+        let currentView = 'downloads'; // 'downloads' or 'tutorials' or 'admin'
+
+        // Hardcoded "database" for users (only exists in browser memory for current session)
+        let INSECURE_LOCAL_USERS = [
+            { id: 1, email: HARDCODED_ACCESS_EMAIL, is_admin: true },
+            // Add other hardcoded users here if needed, e.g.:
+            // { id: 2, email: 'user@example.com', is_admin: false }
+        ];
+        let nextUserId = INSECURE_LOCAL_USERS.length > 0 ? Math.max(...INSECURE_LOCAL_USERS.map(u => u.id)) + 1 : 1;
 
 
-    // --- IMPORTANT: YOUR FIREBASE CONFIGURATION GOES HERE ---
-    // Replace the placeholder values below with your actual config from Firebase Console:
-    // Go to Firebase Console -> Project settings (gear icon) -> General -> Your apps -> Web app -> Firebase SDK snippet -> Config
-    const firebaseConfig = {
-    apiKey: "AIzaSyAnWJNS-YQ5I76tXLGus8GDf22JtabXkmU",
-    authDomain: "sdh-e70c0.firebaseapp.com",
-    projectId: "sdh-e70c0", // <--- THIS MUST BE 'sdh-e70c0'
-    storageBucket: "sdh-e70c0.firebasestorage.app",
-    messagingSenderId: "579727761679",
-    appId: "1:579727761679:web:6d14d658a03ae564b61e7a",
-    measurementId: "G-ZTXL9QFXVM"
-    };
+        /**
+         * Custom alert function to replace window.alert
+         * @param {string} message - The message to display in the alert.
+         */
+        function customAlert(message) {
+            const alertModal = document.getElementById('custom-alert-modal');
+            const alertMessage = document.getElementById('custom-alert-message');
+            const alertOkButton = document.getElementById('custom-alert-ok-button');
+            const closeButton = document.getElementById('custom-alert-close-button');
 
-    // Initialize Firebase
-    let app, db, auth, analytics;
-    try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        analytics = getAnalytics(app); // Initialize analytics here
-    } catch (e) {
-        console.error("Firebase initialization failed:", e);
-        // Using customAlert instead of window.alert
-        customAlert("Failed to initialize Firebase. Please check your console for errors and ensure your firebaseConfig is correct.");
-    }
+            alertMessage.textContent = message;
+            alertModal.classList.add('open');
 
-    // Define the email address where access requests will be sent
-    const REQUEST_RECIPIENT_EMAIL = 'stefan.mitarca@gmail.com';
-    // Define the email address for file requests
-    const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com';
-    // Define the website version
-    const WEBSITE_VERSION = 'v1.0.8';
+            const closeAlert = () => {
+                alertModal.classList.remove('open');
+                alertOkButton.removeEventListener('click', closeAlert);
+                closeButton.removeEventListener('click', closeAlert);
+                alertModal.removeEventListener('click', handleOutsideClick);
+            };
 
-    // Local authentication state
-    let isAuthenticated = false;
-    let isAdminUser = false;
-    let userEmail = null;
-    let currentUserId = null; // Store Firebase User ID
-    let currentView = 'downloads'; // 'downloads' or 'tutorials' or 'admin'
+            const handleOutsideClick = (e) => {
+                if (e.target === alertModal) {
+                    closeAlert();
+                }
+            };
 
-    // Allowed users from Firestore (this will be populated by the onSnapshot listener)
-    let ALLOWED_USERS = [];
-
-    // Firestore Collection Reference
-    let usersCollectionRef;
-    // Check if db and firebaseConfig.projectId are valid before initializing usersCollectionRef
-    if (db && firebaseConfig.projectId && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
-        // Construct the collection path using the actual projectId from your config
-        usersCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/public/data/allowedUsers`);
-    } else {
-        console.warn("Firebase projectId is not set or is still a placeholder. Firestore collection reference not fully initialized.");
-    }
-
-    /**
-     * Custom alert function to replace window.alert
-     * @param {string} message - The message to display in the alert.
-     */
-    function customAlert(message) {
-        const alertModal = document.getElementById('custom-alert-modal');
-        const alertMessage = document.getElementById('custom-alert-message');
-        const alertOkButton = document.getElementById('custom-alert-ok-button');
-
-        alertMessage.textContent = message;
-        alertModal.classList.add('open');
-
-        // Close when OK is clicked or outside is clicked
-        const closeAlert = () => {
-            alertModal.classList.remove('open');
-            alertOkButton.removeEventListener('click', closeAlert);
-            alertModal.removeEventListener('click', handleOutsideClick);
-        };
-
-        const handleOutsideClick = (e) => {
-            if (e.target === alertModal) {
-                closeAlert();
-            }
-        };
-
-        alertOkButton.addEventListener('click', closeAlert);
-        alertModal.addEventListener('click', handleOutsideClick);
-    }
-
-    // Replace default alert with customAlert
-    window.alert = customAlert;
-
-    /**
-     * Sets up a real-time listener for the allowed users from Firestore.
-     * This function will be called once authentication is ready and usersCollectionRef is valid.
-     */
-    function setupAllowedUsersListener() {
-        if (!usersCollectionRef) {
-            console.error("Firestore users collection reference is not initialized. Cannot set up listener.");
-            return;
+            alertOkButton.addEventListener('click', closeAlert);
+            closeButton.addEventListener('click', closeAlert);
+            alertModal.addEventListener('click', handleOutsideClick);
         }
 
-        onSnapshot(usersCollectionRef, (snapshot) => {
-            const users = [];
-            snapshot.forEach(doc => {
-                users.push({ id: doc.id, ...doc.data() });
+        // Replace default alert with customAlert
+        window.alert = customAlert;
+
+        /**
+         * Darkens a given hex color by a specified percentage.
+         * @param {string} hex - The hex color string (e.g., "#RRGGBB").
+         * @param {number} percent - The percentage to darken (e.g., 10 for 10%).
+         * @returns {string} The darkened hex color string.
+         */
+        function darkenColor(hex, percent) {
+            let f = parseInt(hex.slice(1), 16),
+                t = percent < 0 ? 0 : 255,
+                p = percent < 0 ? percent * -1 : percent,
+                R = f >> 16,
+                G = (f >> 8) & 0x00ff,
+                B = (f >> 0) & 0x0000ff;
+            return (
+                "#" +
+                (
+                    0x1000000 +
+                    (Math.round((t - R) * p) + R) * 0x10000 +
+                    (Math.round((t - G) * p) + G) * 0x100 +
+                    (Math.round((t - B) * p) + B)
+                )
+                .toString(16)
+                .slice(1)
+            );
+        }
+
+        /**
+         * Generates an SVG icon displaying a file extension.
+         * @param {string} extension - The file extension to display (e.g., "PDF", "DOC").
+         * @param {string} colorClass - Tailwind CSS class for color (e.g., "text-red-500").
+         * @returns {string} The SVG string for the icon.
+         */
+        function createFileExtensionIcon(extension, colorClass) {
+            let fillColor = '#6B7280';
+            switch (colorClass) {
+                case 'text-red-500': fillColor = '#EF4444'; break;
+                case 'text-yellow-500': fillColor = '#F59E0B'; break;
+                case 'text-orange-500': fillColor = '#F97316'; break;
+                case 'text-blue-500': fillColor = '#3B82F6'; break;
+                case 'text-green-500': fillColor = '#22C55E'; break;
+                case 'text-teal-500': fillColor = '#14B8A6'; break;
+                case 'text-purple-500': fillColor = '#A855F7'; break;
+                case 'text-indigo-500': fillColor = '#6366F1'; break;
+                case 'text-pink-500': fillColor = '#EC4899'; break;
+                case 'text-lime-500': fillColor = '#84CC16'; break;
+                default: fillColor = '#6B7280';
+            }
+
+            const foldedCornerColor = darkenColor(fillColor, 0.15);
+            let fontSize = '6px';
+            let yOffset = '14';
+
+            if (extension.length === 3) {
+                fontSize = '5.5px';
+                yOffset = '13.5';
+            } else if (extension.length === 4) {
+                fontSize = '4.5px';
+                yOffset = '13';
+            } else if (extension.length >= 5) {
+                fontSize = '3.5px';
+                yOffset = '12.5';
+            }
+
+            if (extension.toUpperCase() === 'TRNT') {
+                fontSize = '4px';
+                yOffset = '12.8';
+            }
+
+            const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="w-16 h-16">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7L15 2Z" fill="${fillColor}" filter="url(#shadow)"/>
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4L14 2Z" fill="${foldedCornerColor}"/>
+                        <text x="12" y="${yOffset}" text-anchor="middle" font-size="${fontSize}" fill="white" font-family="sans-serif" font-weight="500">${extension.toUpperCase()}</text>
+                        <defs>
+                            <filter id="shadow">
+                                <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.2)"/>
+                            </filter>
+                        </defs>
+                    </svg>`;
+            return svgString;
+        }
+
+        let downloadItems = [
+            // FILES
+            { id: 43, name: 'AmosOS.VMDK', description: 'Virtual machine disk image for AmosOS.', version: 'VMDK', size: '500 MB', link: 'https://www.mediafire.com/file/xnpr80v57dgafce/AmogOS-x86_64-1.5.0.vmdk/file', category: 'Files', },
+            { id: 44, name: 'Asus Eee PC p701 4g drivers', description: 'Drivers for Asus Eee PC p701 4g model.', version: 'Latest', size: '150 MB', link: 'https://www.mediafire.com/file/gru8ytwow6e29st/Asus_Eee_PC_p701_4g_surf.rar/file', category: 'Files', },
+            { id: 45, name: 'LegacyIOSapparchive', description: 'Torrent file for a legacy iOS app archive.', version: 'Torrent', size: '10 GB', link: 'https://www.mediafire.com/file/q7xd2j5grfcjdf7/legacyiosapparchive-archive.torrent/file', category: 'Files', },
+            { id: 46, name: 'PearOS Monterey x64', description: 'ISO image for PearOS Monterey x64 operating system.', version: 'x64', size: '4.5 GB', link: 'https://www.mediafire.com/file/5whk0hdpzha9a70/pearOS_Monterey.iso/file', category: 'Files', },
+            { id: 64, name: 'WSA_2407.40000.0.0_x64_Release-Nightly-GApps-13.0-NoAmazon', description: 'Windows Subsystem for Android (WSA) package with GApps.', version: '2407.40000.0.0', size: '1.2 GB', link: 'https://www.mediafire.com/file/r0v4h1mh15wz40u/WSA_2407.40000.0.0_x64_Release-Nightly-GApps-13.0-NoAmazon.rar/file', category: 'Files', },
+            // APPS
+            { id: 30, name: 'Windows Device Recovery Tool installer', description: 'Official tool to recover and reset your Windows device.', version: 'Latest', size: '50 MB', link: 'https://www.mediafire.com/file/p1ntrhacznnzruu/WindowsDeviceRecoveryToolInstaller%25282%2529.exe/file', category: 'Apps', },
+            { id: 31, name: 'WPinternals', description: 'Advanced tool for Windows Phone customization and unlocking.', version: 'Latest', size: '30 MB', link: 'https://www.mediafire.com/file/pegzjbhdz161ula/WPinternals_2.8.zip/file', category: 'Apps', },
+            { id: 32, name: 'OTCupdater', description: 'Utility for updating Over-the-Cable devices.', version: 'Latest', size: '10 MB', link: 'https://www.mediafire.com/file/ovmuvd848qxjnwy/otcupdater.zip/file', category: 'Apps', },
+            { id: 35, name: 'Microsoft Office Professional Plus 2010', description: 'Comprehensive suite of productivity applications from Microsoft.', version: '2010', size: '1.5 GB', link: 'https://www.mediafire.com/file/wtkrrrx41nw9czb/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO/file', category: 'Apps', },
+            { id: 39, name: 'WinFast PVR2', description: 'Software for TV tuner cards, enabling TV viewing and recording.', version: 'Latest', size: '120 MB', link: 'https://www.mediafire.com/file/k67auoggsks4593/WinFast_PVR2.rar/file', category: 'Apps', },
+            { id: 40, name: 'BS.Player PRO', description: 'A versatile media player with advanced features.', version: '2.77.1092', size: '22 MB', link: 'https://www.mediafire.com/file/ter3b1x2adkse58/BS.Player_PRO_2.77.1092.rar/file', category: 'Apps', },
+            { id: 41, name: 'Movavi Video Converter', description: 'Powerful video converter for various formats.', version: '22.4.0', size: '65 MB', link: 'https://www.mediafire.com/file/ypkvosarq80uxjl/Movavi_Video_Converter_22.4.0_Premium_RePack_%2528%2526_Portable%2529_by_TryRooM.rar/file', category: 'Apps', },
+            { id: 42, name: 'Lossless Scaling', description: 'Utility for upscaling games and applications with minimal quality loss.', version: '2.9.0', size: '18 MB', link: 'https://www.mediafire.com/file/o6qf8kuvx1gxhie/Lossless.Scaling.v2.9.0.rar/file', category: 'Apps', },
+            // GAMES
+            { id: 9, name: 'The Long Drive', description: 'A challenging and atmospheric driving survival game.', version: 'Latest', size: '550 MB', link: 'https://www.mediafire.com/file/z9e5yp6fu5ixon2/The-Long-Drive.rar/file', category: 'Games', },
+            { id: 10, name: 'Super WorldBox', description: 'A god simulation game where you can create and destroy worlds.', version: '0.13.9', size: '130 MB', link: 'https://www.mediafire.com/file/trrnehgvjp47mvr/WorldBox.v0.13.9.rar/file', category: 'Games', },
+            { id: 28, name: 'Zuma Deluxe', description: 'A classic marble-matching puzzle game.', version: '1.0', size: '16 MB', link: 'https://www.mediafire.com/file/733zs7umv0yggem/Zuma.Deluxe.zip/file', category: 'Games', },
+            { id: 29, name: 'Zuma Revenge', description: 'The sequel to the popular Zuma Deluxe, with new challenges.', version: '1.0', size: '55 MB', link: 'https://www.mediafire.com/file/qqjt5v9utok2jbd/Zumas.Revenge.zip/file', category: 'Games', },
+        ];
+
+        // Filter out items with example.com links (if any were left from previous iterations)
+        downloadItems = downloadItems.filter(item => !item.link.includes('example.com'));
+
+        // Process download items to add icons
+        downloadItems.forEach(item => {
+            const url = new URL(item.link);
+            const pathSegments = url.pathname.split('/').filter(s => s !== '');
+            let filename = '';
+            if (pathSegments.length > 0) {
+                if (pathSegments[pathSegments.length - 1] === 'file' && pathSegments.length > 1) {
+                    filename = pathSegments[pathSegments.length - 2]; // Corrected index
+                } else {
+                    filename = pathSegments[pathSegments.length - 1];
+                }
+            }
+            const parts = filename.split('.');
+            let extension = '';
+            if (parts.length > 1) {
+                extension = parts[parts.length - 1];
+            }
+
+            if (extension === 'file' && filename.includes('.torrent')) {
+                extension = 'torrent';
+            }
+
+            let colorClass = 'text-gray-500';
+            switch (extension.toLowerCase()) {
+                case 'vmdk': case 'iso': colorClass = 'text-red-500'; break;
+                case 'rar': case 'zip': colorClass = 'text-yellow-500'; break;
+                case 'torrent': colorClass = 'text-orange-500'; break;
+                case 'exe': colorClass = 'text-blue-500'; break;
+                case 'mp3': colorClass = 'text-green-500'; break;
+                case 'cab': colorClass = 'text-purple-500'; break;
+                case 'apk': colorClass = 'text-lime-500'; break;
+                case 'apps': colorClass = 'text-indigo-500'; break;
+                case 'games': colorClass = 'text-pink-500'; break;
+                default: colorClass = 'text-gray-500'; // Default case for unknown extensions
+            }
+
+            let displayExtension = extension;
+            if (!extension && item.category === 'Apps') {
+                displayExtension = 'APP';
+                colorClass = 'text-indigo-500';
+            } else if (!extension && item.category === 'Games') {
+                displayExtension = 'GAME';
+                colorClass = 'text-pink-500';
+            } else if (!extension && item.category === 'APK') {
+                displayExtension = 'APK';
+                colorClass = 'text-lime-500';
+            } else if (extension === 'file' && item.link.includes('.torrent')) {
+                displayExtension = 'TRNT';
+                colorClass = 'text-orange-500';
+            }
+
+            item.icon = createFileExtensionIcon(displayExtension, colorClass);
+        });
+
+        let activeCategory = 'All';
+        let searchQuery = '';
+
+        const appRoot = document.getElementById('app-root');
+        const headerButtonsContainer = document.getElementById('header-buttons-container');
+        const mainContentArea = document.getElementById('main-content-area');
+        const currentYearSpan = document.getElementById('current-year');
+        const websiteVersionSpan = document.getElementById('website-version');
+        const manageUsersModal = document.getElementById('manage-users-modal');
+        const closeManageUsersModalButton = document.getElementById('close-manage-users-modal');
+        const newUserEmailInput = document.getElementById('new-user-email');
+        const newUserIsAdminCheckbox = document.getElementById('new-user-is-admin');
+        const addUserMessage = document.getElementById('add-user-message');
+        const addUserButton = document.getElementById('add-user-button');
+        const userListElement = document.getElementById('user-list');
+
+        if (currentYearSpan) {
+            currentYearSpan.textContent = new Date().getFullYear();
+        }
+        if (websiteVersionSpan) {
+            websiteVersionSpan.textContent = WEBSITE_VERSION;
+        }
+
+        /**
+         * Generates a detailed description using the Gemini API.
+         * NOTE: This is an external API call and requires an API key.
+         * For a truly standalone app with NO external calls, this function would need to be removed.
+         * @param {number} itemId - The ID of the download item.
+         * @param {string} currentName - The current name of the item.
+         * @param {string} currentDescription - The current description of the item.
+         */
+        async function generateDescription(itemId, currentName, currentDescription) {
+            const itemIndex = downloadItems.findIndex(item => item.id === itemId);
+            if (itemIndex === -1) {
+                console.error(`Item with ID ${itemId} not found.`);
+                return;
+            }
+
+            const generateButton = document.getElementById(`generate-desc-button-${itemId}`);
+            if (!generateButton) {
+                console.error(`Generate button for item ID ${itemId} not found.`);
+                return;
+            }
+
+            const originalButtonText = generateButton.innerHTML;
+            generateButton.disabled = true;
+            generateButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+            `;
+
+            try {
+                const prompt = `Given the following software/game/file name and a brief description, generate a more detailed, engaging, and appealing description. Focus on what it does, its benefits, and key features. Keep it concise, around 2-3 sentences.
+                                Name: "${currentName}"
+                                Current Description: "${currentDescription}"
+                                New Description:`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // API key is provided by the Canvas environment during runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.error.message}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const newDescription = result.candidates[0].content.parts[0].text;
+                    downloadItems[itemIndex].description = newDescription.trim();
+                    renderDownloadsSection();
+                } else {
+                    console.warn("Gemini API response structure unexpected:", result);
+                    customAlert("Failed to generate description: Unexpected API response.");
+                }
+            } catch (error) {
+                console.error("Error generating description:", error);
+                customAlert(`Failed to generate description: ${error.message}. This feature requires an internet connection.`);
+            } finally {
+                generateButton.disabled = false;
+                generateButton.innerHTML = originalButtonText;
+            }
+        }
+
+        // --- AUTHENTICATION LOGIC (INSECURE & STANDALONE) ---
+        function renderAuthPage() {
+            console.log("Rendering auth page");
+            mainContentArea.innerHTML = `
+                <div class="flex items-center justify-center min-h-[calc(100vh-16rem)]">
+                    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md text-center">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to SDH</h2>
+                        <p class="text-gray-600 mb-6">Enter your email address to access the downloads, or proceed anonymously.</p>
+                        <div class="space-y-4">
+                            <input type="email" id="auth-email" placeholder="Enter Email Address" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-lg" />
+                            <p id="auth-error-message" class="text-red-500 text-sm hidden"></p>
+                            <button id="access-button" class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
+                                Login as Admin
+                            </button>
+                            <button id="anonymous-access-button" class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:scale-105">
+                                Continue Anonymously
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const authEmailInput = document.getElementById('auth-email');
+            const accessButton = document.getElementById('access-button');
+            const anonymousAccessButton = document.getElementById('anonymous-access-button');
+            const errorMessage = document.getElementById('auth-error-message');
+
+            const attemptAdminLogin = () => {
+                const email = authEmailInput.value.toLowerCase().trim();
+                if (email === HARDCODED_ACCESS_EMAIL) {
+                    isAuthenticated = true;
+                    userEmail = HARDCODED_ACCESS_EMAIL;
+                    isAdminUser = true; // Hardcoded email grants admin access for this demo
+                    sessionStorage.setItem('isAuthenticated', 'true'); // Insecure session persistence
+                    sessionStorage.setItem('userEmail', userEmail);
+                    sessionStorage.setItem('isAdminUser', 'true');
+
+                    errorMessage.classList.add('hidden');
+                    currentView = 'downloads';
+                    renderApp();
+                    console.log("Access granted. Logged in as:", userEmail, "Admin:", isAdminUser);
+                } else {
+                    errorMessage.textContent = "Incorrect email address for admin login.";
+                    errorMessage.classList.remove('hidden');
+                }
+            };
+
+            accessButton.onclick = attemptAdminLogin;
+
+            // Add event listener for 'Enter' key on the email input
+            authEmailInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default form submission behavior
+                    attemptAdminLogin();
+                }
             });
-            ALLOWED_USERS = users;
-            console.log("Allowed users updated from Firestore:", ALLOWED_USERS);
 
-            // Re-evaluate current user's admin status and re-render if necessary
-            // This handles cases where admin status changes while user is logged in
-            if (auth.currentUser) { // Check if a Firebase user is active
-                const currentFirebaseUserEmail = auth.currentUser.email; // Get email from Firebase Auth
-                const currentFirebaseUserId = auth.currentUser.uid;
+            anonymousAccessButton.onclick = () => {
+                isAuthenticated = true;
+                userEmail = "Guest User"; // Generic name for anonymous access
+                isAdminUser = false; // Anonymous users are not admins
+                sessionStorage.setItem('isAuthenticated', 'true');
+                sessionStorage.setItem('userEmail', userEmail);
+                sessionStorage.setItem('isAdminUser', 'false');
 
-                let userFoundInAllowedList = false;
-                if (currentFirebaseUserEmail) {
-                    const currentUserData = ALLOWED_USERS.find(u => u.email === currentFirebaseUserEmail);
-                    if (currentUserData) {
-                        userFoundInAllowedList = true;
-                        // Update local state based on Firestore data
-                        if (isAuthenticated !== true || userEmail !== currentUserData.email || isAdminUser !== currentUserData.isAdmin) {
-                            isAuthenticated = true;
-                            userEmail = currentUserData.email;
-                            isAdminUser = currentUserData.isAdmin;
-                            currentUserId = currentFirebaseUserId;
-                            console.log("User state updated from Firestore: Authenticated, Admin:", isAdminUser);
-                            renderApp(); // Re-render if state changed
+                currentView = 'downloads';
+                renderApp();
+                console.log("Access granted as Guest User.");
+            };
+        }
+
+        function logoutUser() {
+            isAuthenticated = false;
+            isAdminUser = false;
+            userEmail = null;
+            sessionStorage.removeItem('isAuthenticated');
+            sessionStorage.removeItem('userEmail');
+            sessionStorage.removeItem('isAdminUser');
+            customAlert("You have been logged out.");
+            renderApp(); // Re-render to show auth page
+        }
+
+        // --- MAIN CONTENT RENDERING ---
+
+        function renderDownloadsSection() {
+            console.log("Rendering downloads section");
+            const filteredDownloads = downloadItems.filter(item => {
+                const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
+                const matchesSearch = searchQuery === '' || item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            const currentSearchInputId = 'search-input';
+            const currentSearchInputValue = searchQuery;
+
+            let downloadsHtml = `
+                <section class="mb-12">
+                    <div class="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 mb-10">
+                        <div class="flex flex-wrap justify-center sm:justify-start gap-4 order-2 sm:order-1" id="category-buttons-container">
+                            </div>
+
+                        <div class="relative w-full sm:w-auto flex-grow sm:flex-grow-0 order-1 sm:order-2 max-w-md">
+                            <input
+                                type="text"
+                                placeholder="Search"
+                                class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
+                                id="${currentSearchInputId}"
+                                value="${currentSearchInputValue}"
+                            />
+                            ${searchQuery ? `
+                                <button
+                                    id="clear-search-button"
+                                    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            `;
+
+            if (filteredDownloads.length > 0) {
+                filteredDownloads.forEach(item => {
+                    downloadsHtml += `
+                        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col">
+                            <div class="p-6 flex flex-col items-center text-center">
+                                <div class="mb-4">${item.icon}</div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                                    ${item.name}
+                                </h3>
+                                <p class="text-gray-600 text-sm mb-4 flex-grow" id="description-${item.id}">
+                                    ${item.description}
+                                </p>
+                                <div class="flex justify-between items-center w-full text-sm text-gray-500 mb-4">
+                                    <span>Version: ${item.version}</span>
+                                    <span>Size: ${item.size}</span>
+                                </div>
+                                <a
+                                    href="${item.link}"
+                                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105"
+                                    download
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    Download Now
+                                </a>
+                                ${isAdminUser ? `
+                                    <button
+                                        id="generate-desc-button-${item.id}"
+                                        class="mt-4 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105"
+                                        onclick="generateDescription(${item.id}, '${item.name.replace(/'/g, "\\'")}', '${item.description.replace(/'/g, "\\'")}')"
+                                    >
+                                        Generate Description (AI)
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                downloadsHtml += `
+                    <div class="col-span-full text-center text-gray-600 text-lg py-10">
+                        No downloads found in this category or matching your search.
+                    </div>
+                `;
+            }
+
+            downloadsHtml += `
+                    </div>
+                </section>
+            `;
+            mainContentArea.innerHTML = downloadsHtml;
+
+            const searchInput = document.getElementById(currentSearchInputId);
+            if (searchInput) {
+                searchInput.oninput = (e) => {
+                    searchQuery = e.target.value;
+                    renderDownloadsSection();
+                };
+                searchInput.focus();
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }
+
+            const clearSearchButton = document.getElementById('clear-search-button');
+            if (clearSearchButton) {
+                clearSearchButton.onclick = () => {
+                    searchQuery = '';
+                    renderDownloadsSection();
+                };
+            }
+
+            const categoryButtonsContainer = document.getElementById('category-buttons-container');
+            if (categoryButtonsContainer) {
+                ['All', 'Apps', 'Games', 'Files', 'APK'].forEach(category => {
+                    const button = document.createElement('button');
+                    button.textContent = category;
+                    button.className = `
+                        px-6 py-2 rounded-xl text-lg font-medium transition-all duration-300
+                        ${activeCategory === category
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
                         }
+                    `;
+                    button.onclick = () => {
+                        activeCategory = category;
+                        searchQuery = '';
+                        renderDownloadsSection();
+                    };
+                    categoryButtonsContainer.appendChild(button);
+                });
+            }
+        }
+
+        function renderTutorialsSection() {
+            console.log("Rendering tutorials section");
+            mainContentArea.innerHTML = `
+                <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Written Tutorials</h2>
+                    <p class="text-lg text-gray-700 mb-4">
+                        Welcome to the SDH Tutorials section! Here you'll find guides and instructions to help you make the most of our downloads and related tools.
+                    </p>
+                    <div class="space-y-6">
+                        <div class="border-b pb-4">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">1. Getting Started with Windows Device Recovery Tool</h3>
+                            <p class="text-gray-600">
+                                Learn how to use the Windows Device Recovery Tool to fix issues with your Windows phone or tablet. This tutorial covers installation, device detection, and flashing firmware.
+                            </p>
+                            <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                        </div>
+                        <div class="border-b pb-4">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">2. Basic Usage of Adobe Photoshop 2023</h3>
+                            <p class="text-gray-600">
+                                A beginner-friendly guide to Adobe Photoshop 2023. Understand the interface, basic tools, and how to perform common image editing tasks.
+                            </p>
+                            <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                        </div>
+                        <div class="border-b pb-4">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">3. Installing Microsoft Office Professional Plus 2010</h3>
+                            <p class="text-gray-600">
+                                Step-by-step instructions for installing Microsoft Office Professional Plus 2010 from an ISO file.
+                            </p>
+                            <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                        </div>
+                        <div class="border-b pb-4">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">4. Playing GTA SA on Modern Systems</h3>
+                            <p class="text-gray-600">
+                                Tips and tricks to get Grand Theft Auto: San Andreas running smoothly on newer operating systems, including common fixes and recommended mods.
+                            </p>
+                            <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">5. Understanding VMDK Files and Virtual Machines</h3>
+                            <p class="text-gray-600">
+                                An introduction to VMDK file format and how to use them with virtualization software like VMware or VirtualBox.
+                            </p>
+                            <a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a>
+                        </div>
+                    </div>
+                    <p class="text-center text-gray-500 mt-8">
+                        More tutorials coming soon!
+                    </p>
+                </div>
+            `;
+        }
+
+        function renderAdminSection() {
+            console.log("Rendering admin section");
+            mainContentArea.innerHTML = `
+                <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
+                    <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-orange-700 drop-shadow-md">
+                        Admin Panel (Standalone - No Persistent Data)
+                    </h2>
+                    <p class="text-red-500 text-sm mb-6 text-center font-semibold">
+                        WARNING: This section is for demonstration only. Changes here will NOT be saved
+                        as there is no database. All data is hardcoded in the website's code.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <button id="manage-users-button" class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Manage Users (Demo)
+                        </button>
+                        <button class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105 col-span-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M12 17.5V3"/><path d="M4.2 12.5 12 3l7.8 9.5"/><path d="M10 16h4"/><path d="M8 20h8"/><path d="M6 24h12"/></svg>
+                            Manage Downloads (Demo)
+                        </button>
+                        <button class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-300 transform hover:scale-105 col-span-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M3 3v18h18"/><path d="M18.7 8.3L12 15l-3.3-3.3L3 18"/><path d="m18 3 6 6"/></svg>
+                            View Analytics (Demo)
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('manage-users-button').onclick = showManageUsersModal;
+        }
+
+        // --- USER MANAGEMENT MODAL LOGIC (INSECURE & NON-PERSISTENT) ---
+        async function showManageUsersModal() {
+            if (!isAdminUser) {
+                customAlert("You must be an admin to manage users.");
+                return;
+            }
+            manageUsersModal.classList.add('open');
+            renderUserList();
+        }
+
+        function hideManageUsersModal() {
+            manageUsersModal.classList.remove('open');
+            addUserMessage.textContent = '';
+            newUserEmailInput.value = '';
+            newUserIsAdminCheckbox.checked = false;
+        }
+
+        function renderUserList() {
+            userListElement.innerHTML = '';
+            INSECURE_LOCAL_USERS.forEach(user => {
+                const listItem = document.createElement('li');
+                listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200';
+                const displayEmail = user.email;
+
+                listItem.innerHTML = `
+                    <span class="font-medium text-gray-800 break-all mr-2">${displayEmail} ${user.is_admin ? '(Admin)' : ''}</span>
+                    <div class="flex items-center space-x-3">
+                        ${displayEmail === userEmail ? `
+                            <span class="text-gray-500 text-sm italic">(Current User)</span>
+                        ` : `
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" data-id="${user.id}" data-email="${displayEmail}" ${user.is_admin ? 'checked' : ''} class="toggle-admin-checkbox sr-only" />
+                                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                <span class="ml-2 text-sm font-medium text-gray-900">Admin</span>
+                            </label>
+                            <button data-id="${user.id}" data-email="${displayEmail}" class="remove-user-button px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded-md hover:bg-red-600 transition-colors">
+                                Remove
+                            </button>
+                        `}
+                    </div>
+                `;
+                userListElement.appendChild(listItem);
+            });
+
+            userListElement.querySelectorAll('.remove-user-button').forEach(button => {
+                button.onclick = (event) => removeUser(event.target.dataset.id, event.target.dataset.email);
+            });
+
+            userListElement.querySelectorAll('.toggle-admin-checkbox').forEach(checkbox => {
+                checkbox.onchange = (event) => toggleAdminStatus(event.target.dataset.id, event.target.dataset.email);
+            });
+        }
+
+        function addUser() {
+            const email = newUserEmailInput.value.toLowerCase().trim();
+            const isAdmin = newUserIsAdminCheckbox.checked;
+
+            if (!isAdminUser) {
+                customAlert("You must be logged in as an admin to add users.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                addUserMessage.textContent = "Please enter a valid email address.";
+                addUserMessage.className = "text-red-500 text-sm mt-1";
+                return;
+            }
+
+            if (INSECURE_LOCAL_USERS.some(u => u.email === email)) {
+                addUserMessage.textContent = "This email address already exists (in this session).";
+                addUserMessage.className = "text-red-500 text-sm mt-1";
+                return;
+            }
+
+            // Add user to the INSECURE_LOCAL_USERS array (non-persistent)
+            INSECURE_LOCAL_USERS.push({ id: nextUserId++, email, is_admin: isAdmin });
+            addUserMessage.textContent = `User "${email}" added successfully (for this session)!`;
+            addUserMessage.className = "text-green-600 text-sm mt-1";
+            newUserEmailInput.value = '';
+            newUserIsAdminCheckbox.checked = false;
+            renderUserList(); // Re-render list
+        }
+
+        function removeUser(userId, emailToRemove) {
+            if (!isAdminUser) {
+                customAlert("You must be logged in as an admin to remove users.");
+                return;
+            }
+
+            if (emailToRemove === userEmail) {
+                customAlert("You cannot remove your own account while logged in.");
+                return;
+            }
+
+            // Remove user from the INSECURE_LOCAL_USERS array (non-persistent)
+            INSECURE_LOCAL_USERS = INSECURE_LOCAL_USERS.filter(user => user.id != userId); // Use != for comparison as userId might be string from dataset
+            customAlert(`User "${emailToRemove}" removed successfully (for this session).`);
+            renderUserList();
+        }
+
+        function toggleAdminStatus(userId, emailToToggle) {
+            if (!isAdminUser) {
+                customAlert("You must be logged in as an admin to change user roles.");
+                renderUserList();
+                return;
+            }
+
+            const user = INSECURE_LOCAL_USERS.find(u => u.id == userId);
+            if (user) {
+                user.is_admin = !user.is_admin;
+                customAlert(`Admin status for "${emailToToggle}" updated to ${user.is_admin} (for this session).`);
+                renderUserList();
+            } else {
+                customAlert("User not found (in this session).");
+                renderUserList();
+            }
+        }
+
+        if (closeManageUsersModalButton) {
+            closeManageUsersModalButton.onclick = hideManageUsersModal;
+        }
+        if (addUserButton) {
+            addUserButton.onclick = addUser;
+        }
+        if (manageUsersModal) {
+            manageUsersModal.addEventListener('click', (e) => {
+                if (e.target === manageUsersModal) {
+                    hideManageUsersModal();
+                }
+            });
+        }
+
+
+        // --- APP RENDERING AND INITIALIZATION ---
+
+        function renderApp() {
+            console.log("renderApp called. User is authenticated:", isAuthenticated, "isAdminUser:", isAdminUser, "currentView:", currentView, "userEmail:", userEmail);
+
+            if (headerButtonsContainer) {
+                headerButtonsContainer.innerHTML = '';
+
+                if (isAuthenticated) {
+                    const tutorialsButton = document.createElement('button');
+                    tutorialsButton.textContent = "Tutorials";
+                    tutorialsButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'tutorials' ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
+                    tutorialsButton.onclick = () => {
+                        currentView = 'tutorials';
+                        renderApp();
+                    };
+                    headerButtonsContainer.appendChild(tutorialsButton);
+
+                    if (isAdminUser) {
+                        const adminButton = document.createElement('button');
+                        adminButton.textContent = "Admin";
+                        adminButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'admin' ? 'bg-red-100 text-red-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
+                        adminButton.onclick = () => {
+                            currentView = 'admin';
+                            renderApp();
+                        };
+                        headerButtonsContainer.appendChild(adminButton);
                     }
-                } else if (auth.currentUser.isAnonymous) {
-                    // Handle anonymous user: always authenticated, never admin via email list
-                    if (isAuthenticated !== true || isAdminUser !== false || userEmail !== null) {
-                        isAuthenticated = true;
-                        userEmail = null; // No email for anonymous
-                        isAdminUser = false;
-                        currentUserId = currentFirebaseUserId;
-                        console.log("Anonymous user state updated from Firestore.");
-                        renderApp(); // Re-render if state changed
-                    }
+
+                    const homeButton = document.createElement('button');
+                    homeButton.textContent = "Home";
+                    homeButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'downloads' ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
+                    homeButton.onclick = () => {
+                        currentView = 'downloads';
+                        renderApp();
+                    };
+                    headerButtonsContainer.appendChild(homeButton);
+
+                    const userProfileContainer = document.createElement('div');
+                    userProfileContainer.className = "relative group ml-4";
+
+                    const userInfoButton = document.createElement('button');
+                    userInfoButton.className = "flex items-center gap-2 px-8 py-4 text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105";
+                    userInfoButton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-white">
+                            <circle cx="12" cy="7" r="4"/>
+                            <path d="M12 15c-3.5 0-6.5 2-9 6h18c-2.5-4-5.5-6-9-6z"/>
+                        </svg>
+                        <span class="hidden sm:block">${userEmail || 'Guest'}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 text-white">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    `;
+                    userProfileContainer.appendChild(userInfoButton);
+
+                    const dropdownMenu = document.createElement('div');
+                    dropdownMenu.className = "absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
+                    dropdownMenu.innerHTML = `
+                        <div class="block w-full text-left px-8 py-4 text-sm text-gray-700">
+                            User: <span class="font-bold break-all">${userEmail || 'Guest'}</span>
+                        </div>
+                        <button id="logout-button" class="block w-full text-left px-8 py-4 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:scale-105">
+                            Logout
+                        </button>
+                    `;
+                    userProfileContainer.appendChild(dropdownMenu);
+                    headerButtonsContainer.appendChild(userProfileContainer);
+
+                    document.getElementById('logout-button').onclick = logoutUser;
+                }
+            }
+
+            // Determine which section to render
+            if (isAuthenticated) {
+                if (currentView === 'downloads') {
+                    renderDownloadsSection();
+                } else if (currentView === 'tutorials') {
+                    renderTutorialsSection();
+                } else if (currentView === 'admin' && isAdminUser) {
+                    renderAdminSection();
+                } else {
+                    // Fallback if admin view is requested but user is not admin
+                    currentView = 'downloads';
+                    renderDownloadsSection();
+                }
+            } else {
+                renderAuthPage();
+            }
+        }
+
+        // Initial load logic
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check session storage for insecure "login" state
+            // Updated to check for both admin email and generic guest email
+            const storedEmail = sessionStorage.getItem('userEmail');
+            const storedIsAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+            const storedIsAdminUser = sessionStorage.getItem('isAdminUser') === 'true';
+
+            if (storedIsAuthenticated) {
+                if (storedEmail === HARDCODED_ACCESS_EMAIL && storedIsAdminUser) {
+                    isAuthenticated = true;
+                    userEmail = HARDCODED_ACCESS_EMAIL;
+                    isAdminUser = true;
+                } else if (storedEmail === "Guest User" && !storedIsAdminUser) {
+                    isAuthenticated = true;
+                    userEmail = "Guest User";
+                    isAdminUser = false;
+                }
+            }
+
+            renderApp();
+
+            const requestFileButton = document.getElementById('request-file-button');
+            if (requestFileButton) {
+                requestFileButton.onclick = () => {
+                    const subject = encodeURIComponent("File Request from SDH Website");
+                    const body = encodeURIComponent("I would like to request a specific file. Please provide details about the file you are looking for here:\n\n");
+                    const mailtoLink = `mailto:${REQUEST_FILE_EMAIL}?subject=${subject}&body=${body}`;
+                    window.location.href = mailtoLink;
+                };
+            }
+        });
+
+        // Expose generateDescription to the global scope for onclick attributes
+        window.generateDescription = generateDescription;
+    </script>
+</body>
+</html>
