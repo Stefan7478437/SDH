@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -131,10 +133,9 @@
     <div class="fixed bottom-4 right-4 bg-gray-800 text-white text-xs px-2 py-1 rounded-full z-50">
         <span class="block sm:hidden">XS</span>
         <span class="hidden sm:block md:hidden">SM</span>
-        <span class="hidden md:block lg:hidden">MD</span>
-        <span class="hidden lg:block xl:hidden">LG</span>
-        <span class="hidden xl:block 2xl:hidden">XL</span>
-        <span class="hidden 2xl:block">2XL</span>
+        <span class="hidden md:block lg:hidden">LG</span>
+        <span class="hidden lg:block xl:hidden">XL</span>
+        <span class="hidden xl:block 2xl:hidden">2XL</span>
     </div>
 </div>
 
@@ -176,25 +177,29 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
 
     // --- IMPORTANT: YOUR FIREBASE CONFIGURATION GOES HERE ---
     // Replace the placeholder values below with your actual config from Firebase Console:
     // Go to Firebase Console -> Project settings (gear icon) -> General -> Your apps -> Web app -> Firebase SDK snippet -> Config
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",           // <--- PASTE YOUR API KEY HERE
-        authDomain: "YOUR_AUTH_DOMAIN",   // <--- PASTE YOUR AUTH DOMAIN HERE
-        projectId: "YOUR_PROJECT_ID",     // <--- PASTE YOUR PROJECT ID HERE
-        storageBucket: "YOUR_STORAGE_BUCKET", // <--- PASTE YOUR STORAGE BUCKET HERE
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- PASTE YOUR MESSAGING SENDER ID HERE
-        appId: "YOUR_APP_ID"              // <--- PASTE YOUR APP ID HERE
+        apiKey: "AIzaSyAnWJNS-YQ5I76tXLGus8GDf22JtabXkmU",
+        authDomain: "sdh-e70c0.firebaseapp.com",
+        projectId: "sdh-e70c0",
+        storageBucket: "sdh-e70c0.firebasestorage.app",
+        messagingSenderId: "579727761679",
+        appId: "1:579727761679:web:6d14d658a03ae564b61e7a",
+        measurementId: "G-ZTXL9QFXVM"
     };
 
     // Initialize Firebase
-    let app, db, auth;
+    let app, db, auth, analytics;
     try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
+        analytics = getAnalytics(app); // Initialize analytics here
     } catch (e) {
         console.error("Firebase initialization failed:", e);
         // Using customAlert instead of window.alert
@@ -206,7 +211,7 @@
     // Define the email address for file requests
     const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com';
     // Define the website version
-    const WEBSITE_VERSION = 'v1.0.8'; // Version remains consistent as the functionality is the same
+    const WEBSITE_VERSION = 'v1.0.8';
 
     // Local authentication state
     let isAuthenticated = false;
@@ -220,6 +225,7 @@
 
     // Firestore Collection Reference
     let usersCollectionRef;
+    // Check if db and firebaseConfig.projectId are valid before initializing usersCollectionRef
     if (db && firebaseConfig.projectId && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
         // Construct the collection path using the actual projectId from your config
         usersCollectionRef = collection(db, `artifacts/${firebaseConfig.projectId}/public/data/allowedUsers`);
@@ -1157,7 +1163,7 @@
             const displayEmail = user.email;
             const docId = user.id; // The Firestore document ID
 
-            li.innerHTML = `
+            listItem.innerHTML = `
                 <span class="font-medium text-gray-800 break-all mr-2">${displayEmail} ${user.isAdmin ? '(Admin)' : ''}</span>
                 <div class="flex items-center space-x-3">
                     ${displayEmail === userEmail ? `
@@ -1500,3 +1506,4 @@
     window.generateDescription = generateDescription;
 </script>
 </body>
+</html>
