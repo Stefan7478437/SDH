@@ -416,6 +416,64 @@
             item.icon = createFileExtensionIcon(displayExtension, colorClass);
         });
 
+        // --- BEGIN: Dynamic size fetching from MediaFire pages via proxy ---
+        function toProxyUrl(originalUrl) {
+            try {
+                const u = new URL(originalUrl);
+                const withoutProtocol = u.href.replace(/^https?:\/\//i, '');
+                // Use r.jina.ai to bypass CORS and get text content of the page
+                return `https://r.jina.ai/http://${withoutProtocol}`;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function parseHumanFileSizeFromText(text) {
+            // Prefer patterns near keywords
+            const keywordPattern = /(file\s*size|size|filesize)[^\n]{0,80}?(\d+(?:[.,]\d+)?)(\s*)(TB|GB|MB|KB|B)/i;
+            let match = text.match(keywordPattern);
+            if (!match) {
+                // Fallback: first occurrence of a size-looking pattern
+                const genericPattern = /(\d+(?:[.,]\d+)?)(\s*)(TB|GB|MB|KB|B)/i;
+                match = text.match(genericPattern);
+            }
+            if (!match) return null;
+            let value = match[2] || match[1];
+            let unit = (match[5] || match[3] || '').toUpperCase();
+            value = value.replace(',', '.');
+            // Normalize to one decimal if needed
+            const numeric = parseFloat(value);
+            if (!isFinite(numeric)) return null;
+            // Keep original unit; format compactly
+            return `${numeric % 1 === 0 ? numeric.toFixed(0) : numeric.toFixed(2)} ${unit}`;
+        }
+
+        async function fetchAndUpdateItemSize(item) {
+            const proxyUrl = toProxyUrl(item.link);
+            if (!proxyUrl) return;
+            try {
+                const resp = await fetch(proxyUrl, { method: 'GET' });
+                if (!resp.ok) return;
+                const text = await resp.text();
+                const parsed = parseHumanFileSizeFromText(text);
+                if (parsed) {
+                    item.size = parsed;
+                }
+            } catch (err) {
+                // silently ignore; we keep existing size
+            }
+        }
+
+        async function updateAllItemSizes() {
+            const tasks = downloadItems.map(item => fetchAndUpdateItemSize(item));
+            await Promise.all(tasks);
+            // Re-render downloads view if currently visible
+            if (isAuthenticated && currentView === 'downloads') {
+                renderDownloadsSection();
+            }
+        }
+        // --- END: Dynamic size fetching ---
+
         let activeCategory = 'All';
         let searchQuery = '';
 
@@ -1079,6 +1137,9 @@
                     window.location.href = mailtoLink;
                 };
             }
+
+            // Kick off background size refresh
+            updateAllItemSizes();
         });
 
         // Expose generateDescription to the global scope for onclick attributes
