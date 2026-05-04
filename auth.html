@@ -15,6 +15,206 @@
             background: radial-gradient(circle at top right, #f0f2f5, #e5e7eb); 
         }
         
+        /* Spinner Logic */
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #3b82f6;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* The Loader Overlay */
+        #loading-overlay {
+            display: none; /* Controlled by JS */
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .gradient-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #d946ef 100%);
+            background-size: 200% 200%;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+        }
+        .gradient-btn:hover { background-position: right center; transform: translateY(-1px); }
+
+        .section-animate {
+            display: none; /* Using Display instead of opacity for reliability */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
+        
+        <!-- FORCE-HIDDEN BY DEFAULT LOADER -->
+        <div id="loading-overlay">
+            <div class="spinner mb-2"></div>
+            <p class="text-sm font-bold text-blue-600">Preparing...</p>
+        </div>
+
+        <div class="text-center mb-6">
+            <h1 class="text-5xl font-black mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent inline-block">SDH</h1>
+            <p id="view-subtitle" class="text-gray-400 font-medium">Sign in to your account</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
+                <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 outline-none bg-gray-50" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
+                <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 outline-none bg-gray-50" />
+            </div>
+
+            <div id="repeat-password-section" class="section-animate">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Repeat Password</label>
+                <input type="password" id="repeat-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 outline-none bg-gray-50" />
+            </div>
+
+            <div id="error-box" class="hidden p-3 rounded-xl text-center text-sm font-semibold"></div>
+
+            <button id="action-btn" class="gradient-btn w-full mt-4 px-6 py-4 font-bold rounded-2xl text-white">Login</button>
+
+            <div class="text-center pt-2">
+                <button id="toggle-view-btn" class="text-sm text-gray-500 hover:text-blue-600">
+                    Don't have an account? <span class="font-bold underline">Sign Up</span>
+                </button>
+            </div>
+            
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-300 font-bold">Or</span></div>
+            </div>
+
+            <button id="guest-btn" class="w-full py-2 text-gray-400 hover:text-gray-600 text-xs font-bold tracking-widest uppercase">Continue Anonymously</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://davfpjqubzfxcwlwxmjg.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_S-IH7rZQwgSvGncHvbNkiA_ETrg-hWY';
+        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const emailInput = document.getElementById('email');
+        const passInput = document.getElementById('password');
+        const repeatInput = document.getElementById('repeat-password');
+        const repeatSection = document.getElementById('repeat-password-section');
+        const errorBox = document.getElementById('error-box');
+        const actionBtn = document.getElementById('action-btn');
+        const toggleBtn = document.getElementById('toggle-view-btn');
+        const subtitle = document.getElementById('view-subtitle');
+        const loader = document.getElementById('loading-overlay');
+
+        let isLoginMode = true;
+
+        function toggleMode() {
+            // SHOW LOADER
+            loader.style.display = 'flex';
+            
+            // Safety timeout: Hide loader no matter what after 2 seconds
+            const safetyTimeout = setTimeout(() => { loader.style.display = 'none'; }, 2000);
+
+            setTimeout(() => {
+                isLoginMode = !isLoginMode;
+                errorBox.classList.add('hidden');
+                
+                if (isLoginMode) {
+                    subtitle.textContent = "Sign in to your account";
+                    actionBtn.textContent = "Login";
+                    toggleBtn.innerHTML = 'Don\'t have an account? <span class="font-bold underline">Sign Up</span>';
+                    repeatSection.style.display = 'none';
+                } else {
+                    subtitle.textContent = "Create your account";
+                    actionBtn.textContent = "Register Now";
+                    toggleBtn.innerHTML = 'Already have an account? <span class="font-bold underline">Log In</span>';
+                    repeatSection.style.display = 'block';
+                }
+                
+                // HIDE LOADER
+                loader.style.display = 'none';
+                clearTimeout(safetyTimeout);
+            }, 600); 
+        }
+
+        async function handleAuth() {
+            const email = emailInput.value;
+            const password = passInput.value;
+            errorBox.classList.add('hidden');
+
+            if (!email || !password) {
+                showError("Please fill in your credentials.");
+                return;
+            }
+
+            actionBtn.disabled = true;
+            actionBtn.style.opacity = "0.5";
+
+            try {
+                if (isLoginMode) {
+                    const { error } = await sbClient.auth.signInWithPassword({ email, password });
+                    if (error) {
+                        showError(error.message.includes("invalid login") ? "Check credentials or Sign Up!" : error.message);
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    if (password !== repeatInput.value) {
+                        showError("Passwords do not match!");
+                    } else {
+                        const { error } = await sbClient.auth.signUp({ email, password });
+                        if (error) showError(error.message);
+                        else { alert("Success! Check email."); toggleMode(); }
+                    }
+                }
+            } catch (e) {
+                showError("Connection failed.");
+            } finally {
+                actionBtn.disabled = false;
+                actionBtn.style.opacity = "1";
+            }
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.classList.remove('hidden');
+            errorBox.className = "p-3 rounded-xl text-center text-sm font-semibold bg-red-50 text-red-600 mt-2";
+        }
+
+        actionBtn.onclick = handleAuth;
+        toggleBtn.onclick = toggleMode;
+        document.getElementById('guest-btn').onclick = () => { sessionStorage.setItem('sdh_guest', 'true'); window.location.href = 'index.html'; };
+        window.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAuth(); });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDH - Authentication</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: radial-gradient(circle at top right, #f0f2f5, #e5e7eb); 
+        }
+        
         .auth-container { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
         /* Loading Spinner */
