@@ -17,7 +17,7 @@
         
         .auth-container { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* Loading Spinner Animation */
+        /* Loading Spinner */
         .spinner {
             border: 3px solid rgba(0, 0, 0, 0.1);
             width: 36px;
@@ -30,6 +30,24 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* Gradient Button Styling */
+        .gradient-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #d946ef 100%);
+            background-size: 200% 200%;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+        }
+
+        .gradient-btn:hover {
+            background-position: right center;
+            transform: translateY(-1px);
+            box-shadow: 0 15px 20px -3px rgba(59, 130, 246, 0.4);
+        }
+
+        .gradient-btn:active {
+            transform: scale(0.98);
         }
 
         .hidden-view { display: none; }
@@ -64,13 +82,14 @@
         </div>
 
         <div class="space-y-4">
-            <!-- Form Content -->
             <div id="form-content">
+                <!-- Email -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Email Address</label>
                     <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
                 </div>
 
+                <!-- Password -->
                 <div class="mt-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Password</label>
                     <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
@@ -87,7 +106,8 @@
                     <div id="error-content" class="p-3 rounded-xl text-center text-sm font-semibold mt-2"></div>
                 </div>
 
-                <button id="action-btn" class="w-full mt-6 px-6 py-4 font-bold rounded-2xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all transform active:scale-95 shadow-lg shadow-blue-200">
+                <!-- Gradient Action Button -->
+                <button id="action-btn" class="gradient-btn w-full mt-6 px-6 py-4 font-bold rounded-2xl text-white">
                     Login
                 </button>
 
@@ -133,12 +153,8 @@
                 : "p-3 rounded-xl text-center text-sm font-semibold bg-red-50 text-red-600 border border-red-100";
         }
 
-        // The Switch with Loading Animation
         function toggleMode() {
-            // Show Loader
             loader.classList.remove('hidden-view');
-            
-            // Artificial delay to show the "pop-up" loading effect
             setTimeout(() => {
                 isLoginMode = !isLoginMode;
                 errorBox.classList.remove('show-section');
@@ -154,8 +170,6 @@
                     toggleBtn.innerHTML = 'Already have an account? <span class="font-bold underline">Log In</span>';
                     repeatSection.classList.add('show-section');
                 }
-                
-                // Hide Loader
                 loader.classList.add('hidden-view');
             }, 600); 
         }
@@ -171,14 +185,14 @@
             }
 
             actionBtn.disabled = true;
-            actionBtn.style.opacity = "0.7";
+            actionBtn.classList.add('opacity-70');
 
             if (isLoginMode) {
                 const { error } = await sbClient.auth.signInWithPassword({ email, password });
                 if (error) {
                     const msg = error.message.toLowerCase();
                     if (msg.includes("invalid login") || error.status === 400) {
-                        showError("Check your password or switch to 'Sign Up' if you're new.", "warning");
+                        showError("Incorrect password or email. Switch to 'Sign Up' if you're new.", "warning");
                     } else {
                         showError(error.message);
                     }
@@ -198,7 +212,7 @@
                 }
             }
             actionBtn.disabled = false;
-            actionBtn.style.opacity = "1";
+            actionBtn.classList.remove('opacity-70');
         }
 
         actionBtn.onclick = handleAuth;
