@@ -58,9 +58,9 @@
 
     <main class="max-w-7xl mx-auto px-6 mt-12">
         
-        <!-- Action Bar (Categories & Search Only) -->
+        <!-- Simplified Action Bar -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
-            <!-- Navigation Buttons -->
+            <!-- Navigation -->
             <div id="category-filters" class="flex flex-wrap gap-3">
                 <button class="category-btn active px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="all">All</button>
                 <button class="category-btn px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="applications">Applications</button>
@@ -68,7 +68,7 @@
                 <button class="category-btn px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="miscellaneous">Miscellaneous</button>
             </div>
 
-            <!-- Search Bar -->
+            <!-- Search -->
             <div class="relative w-full lg:w-96">
                 <input type="text" id="search-input" placeholder="Search resources..." class="bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all placeholder-slate-500">
                 <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
@@ -101,9 +101,7 @@
         async function checkSession() {
             const { data: { session } } = await sbClient.auth.getSession();
             const isGuest = sessionStorage.getItem('sdh_guest') === 'true';
-
             if (!session && !isGuest) { window.location.href = 'auth.html'; return; }
-
             if (session) {
                 userDisplay.textContent = session.user.email;
                 const { data: profile } = await sbClient.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
@@ -123,18 +121,15 @@
         function renderItems() {
             const searchTerm = searchInput.value.toLowerCase();
             grid.innerHTML = '';
-
             const filtered = currentData.filter(item => {
                 const matchesSearch = item.name.toLowerCase().includes(searchTerm);
                 const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
                 return matchesSearch && matchesCategory;
             });
-
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">No items match your current selection.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">No items found.</div>';
                 return;
             }
-
             filtered.forEach(item => {
                 const card = document.createElement('div');
                 card.className = `card-custom rounded-[2.5rem] p-8 relative overflow-hidden ${editMode ? 'edit-active' : ''}`;
@@ -157,7 +152,6 @@
             });
         }
 
-        // Category Filter Logic
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -167,7 +161,6 @@
             };
         });
 
-        // Admin Toggles
         document.getElementById('admin-edit-toggle').onclick = () => {
             editMode = !editMode;
             statusText.classList.toggle('hidden', !editMode);
