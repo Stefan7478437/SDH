@@ -67,9 +67,9 @@
 
         .dropdown-menu-container {
             top: 100%;
-            left: 0;
             right: 0;
             padding-top: 0;
+            min-width: 100%;
         }
 
         .admin-feature { display: none; } 
@@ -84,10 +84,12 @@
 
     <nav class="header-defined sticky top-0 z-50 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <!-- Branding -->
             <h1 class="text-3xl font-black text-white tracking-tight">AFT <span class="text-blue-400">Studio</span></h1>
             
+            <!-- Account Menu -->
             <div class="relative group">
-                <div class="flex items-center gap-2 px-4 py-2 rounded-t-2xl rounded-b-2xl group-hover:rounded-b-none border border-slate-700 bg-slate-800/40 group-hover:bg-slate-800 cursor-pointer transition-all shadow-inner">
+                <div class="flex items-center gap-3 px-4 py-2 rounded-t-2xl rounded-b-2xl group-hover:rounded-b-none border border-slate-700 bg-slate-800/40 group-hover:bg-slate-800 cursor-pointer transition-all shadow-inner">
                     <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -130,7 +132,7 @@
                 <p id="status-text" class="text-slate-400 mt-2 font-medium">Browse our library of software and tools.</p>
             </div>
             <div class="relative w-full md:w-72">
-                <input type="text" id="search-input" placeholder="Search items..." class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all">
+                <input type="text" id="search-input" placeholder="Search items..." class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute right-4 top-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -138,14 +140,13 @@
         </div>
 
         <div class="flex flex-wrap gap-3 mb-10" id="category-filters">
-            <button data-cat="all" class="category-btn active px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm">All</button>
-            <button data-cat="applications" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm">Applications</button>
-            <button data-cat="games" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm">Games</button>
-            <button data-cat="miscellaneous" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm">Miscellaneous</button>
+            <button data-cat="all" class="category-btn active px-6 py-2.5 rounded-xl text-sm font-bold">All</button>
+            <button data-cat="applications" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Applications</button>
+            <button data-cat="games" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Games</button>
+            <button data-cat="miscellaneous" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Miscellaneous</button>
         </div>
 
         <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Loading State -->
             <div class="col-span-full py-20 text-center text-slate-500 animate-pulse">Loading library...</div>
         </div>
     </main>
@@ -173,13 +174,7 @@
 
             if (session) {
                 userDisplay.textContent = session.user.email;
-                
-                const { data: profile } = await sbClient
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
-
+                const { data: profile } = await sbClient.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
                 if (profile && profile.role === 'admin') {
                     adminElements.forEach(el => el.style.display = 'flex');
                 }
@@ -188,13 +183,8 @@
         }
 
         async function fetchData() {
-            const { data, error } = await sbClient
-                .from('downloads')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
+            const { data, error } = await sbClient.from('downloads').select('*').order('created_at', { ascending: false });
             if (error) {
-                console.error("Fetch error:", error);
                 grid.innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load content.</div>`;
             } else {
                 currentData = data;
@@ -213,7 +203,7 @@
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500">No items found.</div>`;
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500">No results found for "${searchInput.value}"</div>`;
                 return;
             }
 
