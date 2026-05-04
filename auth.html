@@ -11,43 +11,54 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .auth-card { transition: all 0.3s ease; }
+        .hidden-view { display: none; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md auth-card">
         <div class="text-center mb-8">
             <h1 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent inline-block">SDH</h1>
-            <p id="auth-subtitle" class="text-gray-500">Sign in to your account</p>
+            <p id="view-title" class="text-gray-500 font-medium">Sign in to your account</p>
         </div>
 
         <div class="space-y-4">
+            <!-- Email Input (Shared) -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
                 <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
+
+            <!-- Password Input (Shared) -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
                 <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
 
-            <p id="error-msg" class="text-red-500 text-sm hidden bg-red-50 p-3 rounded-lg text-center font-medium"></p>
+            <!-- Repeat Password (Sign Up Only) -->
+            <div id="repeat-password-container" class="hidden-view">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Repeat Password</label>
+                <input type="password" id="repeat-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
+            </div>
 
-            <!-- Main Action Button -->
-            <button id="submit-btn" class="w-full px-6 py-3 font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.01] shadow-md">
+            <!-- Error Messages -->
+            <div id="error-container" class="hidden-view p-3 rounded-lg text-center text-sm font-medium">
+                <p id="error-text"></p>
+            </div>
+
+            <!-- Action Buttons -->
+            <button id="main-action-btn" class="w-full px-6 py-3 font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.01] shadow-md">
                 Login
             </button>
 
-            <!-- Toggle between Login and Sign Up -->
             <div class="text-center mt-4">
-                <button id="toggle-mode-btn" class="text-sm text-gray-600 hover:text-blue-500 font-medium">
+                <button id="switch-view-btn" class="text-sm text-gray-600 hover:text-blue-500 font-medium">
                     Don't have an account? <span class="text-blue-600 font-bold">Sign Up</span>
                 </button>
             </div>
             
-            <div class="relative py-4">
+            <div id="guest-divider" class="relative py-4">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
                 <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Or</span></div>
             </div>
@@ -61,82 +72,104 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_S-IH7rZQwgSvGncHvbNkiA_ETrg-hWY';
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Elements
         const emailInput = document.getElementById('email');
         const passInput = document.getElementById('password');
-        const errorEl = document.getElementById('error-msg');
-        const submitBtn = document.getElementById('submit-btn');
-        const toggleBtn = document.getElementById('toggle-mode-btn');
-        const subtitle = document.getElementById('auth-subtitle');
+        const repeatPassInput = document.getElementById('repeat-password');
+        const repeatContainer = document.getElementById('repeat-password-container');
+        const errorContainer = document.getElementById('error-container');
+        const errorText = document.getElementById('error-text');
+        const actionBtn = document.getElementById('main-action-btn');
+        const switchBtn = document.getElementById('switch-view-btn');
+        const viewTitle = document.getElementById('view-title');
 
-        let isLoginMode = true;
+        let isLoginView = true;
 
-        // Check if user is already logged in
-        async function checkSession() {
-            const { data } = await sbClient.auth.getSession();
-            if (data.session) window.location.href = 'index.html';
-        }
-        checkSession();
-
-        function toggleMode() {
-            isLoginMode = !isLoginMode;
-            if (isLoginMode) {
-                subtitle.textContent = "Sign in to your account";
-                submitBtn.textContent = "Login";
-                toggleBtn.innerHTML = 'Don\'t have an account? <span class="text-blue-600 font-bold">Sign Up</span>';
+        // View Switching Logic
+        function setView(toLogin) {
+            isLoginView = toLogin;
+            errorContainer.classList.add('hidden-view');
+            
+            if (isLoginView) {
+                viewTitle.textContent = "Sign in to your account";
+                actionBtn.textContent = "Login";
+                switchBtn.innerHTML = 'Don\'t have an account? <span class="text-blue-600 font-bold">Sign Up</span>';
+                repeatContainer.classList.add('hidden-view');
             } else {
-                subtitle.textContent = "Create a new account";
-                submitBtn.textContent = "Create Account";
-                toggleBtn.innerHTML = 'Already have an account? <span class="text-blue-600 font-bold">Log In</span>';
+                viewTitle.textContent = "Create your account";
+                actionBtn.textContent = "Register";
+                switchBtn.innerHTML = 'Already have an account? <span class="text-blue-600 font-bold">Log In</span>';
+                repeatContainer.classList.remove('hidden-view');
             }
-            errorEl.classList.add('hidden');
         }
 
+        function displayError(message, type = 'error') {
+            errorContainer.classList.remove('hidden-view');
+            errorText.textContent = message;
+            
+            if (type === 'auth-fail') {
+                // Style for specific auth errors (e.g., Wrong password)
+                errorContainer.className = "p-3 rounded-lg text-center text-sm font-medium bg-orange-50 text-orange-700 border border-orange-200";
+            } else {
+                // Standard red error
+                errorContainer.className = "p-3 rounded-lg text-center text-sm font-medium bg-red-50 text-red-700 border border-red-200";
+            }
+        }
+
+        // Authentication Logic
         async function handleAuth() {
             const email = emailInput.value;
             const password = passInput.value;
-            errorEl.classList.add('hidden');
-
+            
             if (!email || !password) {
-                showError("Please fill in all fields.");
+                displayError("Please enter both email and password.");
                 return;
             }
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = isLoginMode ? "Logging in..." : "Creating account...";
-
-            if (isLoginMode) {
-                const { error } = await sbClient.auth.signInWithPassword({ email, password });
-                if (error) showError(error.message);
-                else window.location.href = 'index.html';
+            if (isLoginView) {
+                const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+                
+                if (error) {
+                    // Logic for different error types
+                    if (error.message.toLowerCase().includes("invalid login credentials")) {
+                        displayError("Wrong password. Please try again.", 'auth-fail');
+                    } else if (error.message.toLowerCase().includes("email not confirmed") || error.status === 400) {
+                        displayError("This email is not registered. Would you like to create an account?", 'auth-fail');
+                    } else {
+                        displayError(error.message);
+                    }
+                } else {
+                    window.location.href = 'index.html';
+                }
             } else {
+                // Registration Logic
+                const repeatPassword = repeatPassInput.value;
+                if (password !== repeatPassword) {
+                    displayError("Passwords do not match.");
+                    return;
+                }
+
                 const { error } = await sbClient.auth.signUp({ email, password });
-                if (error) showError(error.message);
-                else {
-                    alert("Account created! If email confirmation is enabled, please check your inbox before logging in.");
-                    toggleMode();
+                if (error) {
+                    displayError(error.message);
+                } else {
+                    alert("Registration successful! Check your email if confirmation is required.");
+                    setView(true);
                 }
             }
-            submitBtn.disabled = false;
         }
 
-        function showError(msg) {
-            errorEl.textContent = msg;
-            errorEl.classList.remove('hidden');
-            submitBtn.textContent = isLoginMode ? "Login" : "Create Account";
-        }
-
-        submitBtn.onclick = handleAuth;
-        toggleBtn.onclick = toggleMode;
+        // Event Listeners
+        actionBtn.onclick = handleAuth;
+        switchBtn.onclick = () => setView(!isLoginView);
         
         document.getElementById('guest-btn').onclick = () => {
             sessionStorage.setItem('sdh_guest', 'true');
             window.location.href = 'index.html';
         };
 
-        // Allow Enter key to submit
-        window.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleAuth();
-        });
+        // Initialize view
+        setView(true);
     </script>
 </body>
 </html>
