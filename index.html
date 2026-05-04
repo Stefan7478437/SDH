@@ -58,9 +58,9 @@
 
     <main class="max-w-7xl mx-auto px-6 mt-12">
         
-        <!-- Header Replacement Area -->
+        <!-- Action Bar (Categories & Search Only) -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
-            <!-- Buttons replace "Library" text -->
+            <!-- Navigation Buttons -->
             <div id="category-filters" class="flex flex-wrap gap-3">
                 <button class="category-btn active px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="all">All</button>
                 <button class="category-btn px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="applications">Applications</button>
@@ -70,14 +70,14 @@
 
             <!-- Search Bar -->
             <div class="relative w-full lg:w-96">
-                <input type="text" id="search-input" placeholder="Search library..." class="bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all placeholder-slate-500">
+                <input type="text" id="search-input" placeholder="Search resources..." class="bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all placeholder-slate-500">
                 <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
             </div>
         </div>
 
-        <p id="status-text" class="hidden text-center mb-8 text-blue-400 font-bold tracking-widest text-xs uppercase">🛠️ EDIT MODE: ON</p>
+        <p id="status-text" class="hidden text-center mb-8 text-blue-400 font-bold tracking-widest text-xs uppercase">🛠️ ADMIN EDIT MODE ACTIVE</p>
 
         <!-- Content Grid -->
         <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
@@ -131,7 +131,7 @@
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">No results found for this category.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">No items match your current selection.</div>';
                 return;
             }
 
@@ -176,12 +176,10 @@
 
         document.getElementById('admin-add-item').onclick = async () => {
             const name = prompt("Name:");
-            const category = prompt("Category (applications/games/miscellaneous):", "applications");
+            const category = prompt("Category:", "applications");
             const url = prompt("URL:");
             const size = prompt("Size:", "N/A");
-            
             if (!name || !category || !url) return;
-
             const { error } = await sbClient.from('downloads').insert([{ 
                 name, category: category.toLowerCase(), url, size, icon: '📦' 
             }]);
