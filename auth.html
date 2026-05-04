@@ -50,8 +50,16 @@
             transform: scale(0.98);
         }
 
-        .hidden-view { display: none; }
+        /* Hidden Utility */
+        .hidden-overlay { 
+            opacity: 0 !important; 
+            pointer-events: none !important; 
+        }
         
+        #loading-overlay {
+            transition: opacity 0.3s ease;
+        }
+
         .section-animate {
             max-height: 0;
             opacity: 0;
@@ -71,7 +79,7 @@
     <div id="auth-card" class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md auth-container relative overflow-hidden">
         
         <!-- Loading Overlay -->
-        <div id="loading-overlay" class="hidden-view absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div id="loading-overlay" class="hidden-overlay absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
             <div class="spinner mb-2"></div>
             <p class="text-sm font-bold text-blue-600 tracking-tight">Preparing...</p>
         </div>
@@ -95,7 +103,7 @@
                     <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
                 </div>
 
-                <!-- Repeat Password (Hidden initially) -->
+                <!-- Repeat Password -->
                 <div id="repeat-password-section" class="section-animate">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Repeat Password</label>
                     <input type="password" id="repeat-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
@@ -106,7 +114,7 @@
                     <div id="error-content" class="p-3 rounded-xl text-center text-sm font-semibold mt-2"></div>
                 </div>
 
-                <!-- Gradient Action Button -->
+                <!-- Action Button -->
                 <button id="action-btn" class="gradient-btn w-full mt-6 px-6 py-4 font-bold rounded-2xl text-white">
                     Login
                 </button>
@@ -153,8 +161,10 @@
                 : "p-3 rounded-xl text-center text-sm font-semibold bg-red-50 text-red-600 border border-red-100";
         }
 
+        // Toggling with a fail-safe loader removal
         function toggleMode() {
-            loader.classList.remove('hidden-view');
+            loader.classList.remove('hidden-overlay');
+            
             setTimeout(() => {
                 isLoginMode = !isLoginMode;
                 errorBox.classList.remove('show-section');
@@ -170,7 +180,9 @@
                     toggleBtn.innerHTML = 'Already have an account? <span class="font-bold underline">Log In</span>';
                     repeatSection.classList.add('show-section');
                 }
-                loader.classList.add('hidden-view');
+                
+                // Hide loader
+                loader.classList.add('hidden-overlay');
             }, 600); 
         }
 
@@ -185,34 +197,39 @@
             }
 
             actionBtn.disabled = true;
-            actionBtn.classList.add('opacity-70');
+            actionBtn.style.opacity = "0.5";
 
-            if (isLoginMode) {
-                const { error } = await sbClient.auth.signInWithPassword({ email, password });
-                if (error) {
-                    const msg = error.message.toLowerCase();
-                    if (msg.includes("invalid login") || error.status === 400) {
-                        showError("Incorrect password or email. Switch to 'Sign Up' if you're new.", "warning");
+            try {
+                if (isLoginMode) {
+                    const { error } = await sbClient.auth.signInWithPassword({ email, password });
+                    if (error) {
+                        const msg = error.message.toLowerCase();
+                        if (msg.includes("invalid login") || error.status === 400) {
+                            showError("Check your credentials or Sign Up if you're new.", "warning");
+                        } else {
+                            showError(error.message);
+                        }
                     } else {
-                        showError(error.message);
+                        window.location.href = 'index.html';
                     }
                 } else {
-                    window.location.href = 'index.html';
-                }
-            } else {
-                if (password !== repeatInput.value) {
-                    showError("Passwords do not match!");
-                } else {
-                    const { error } = await sbClient.auth.signUp({ email, password });
-                    if (error) showError(error.message);
-                    else {
-                        alert("Account created! Check your email to verify.");
-                        toggleMode();
+                    if (password !== repeatInput.value) {
+                        showError("Passwords do not match!");
+                    } else {
+                        const { error } = await sbClient.auth.signUp({ email, password });
+                        if (error) showError(error.message);
+                        else {
+                            alert("Account created! Check your email to verify.");
+                            toggleMode();
+                        }
                     }
                 }
+            } catch (e) {
+                showError("A connection error occurred.");
+            } finally {
+                actionBtn.disabled = false;
+                actionBtn.style.opacity = "1";
             }
-            actionBtn.disabled = false;
-            actionBtn.classList.remove('opacity-70');
         }
 
         actionBtn.onclick = handleAuth;
