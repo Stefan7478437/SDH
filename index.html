@@ -8,640 +8,114 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            line-height: 1.6;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        #app-root {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-        header {
-            background-color: #ffffff;
-            padding: 1.5rem 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        header .logo {
-            font-size: 2.25rem;
-            font-weight: 800;
-            background-image: linear-gradient(to right, #3b82f6, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-        }
-        header .logo .version-indicator {
-            font-size: 0.875rem;
-            font-weight: 400;
-            color: #6b7280;
-            -webkit-text-fill-color: initial;
-            background-image: none;
-            text-shadow: none;
-        }
-        main {
-            flex-grow: 1;
-            padding: 2rem;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-        }
-        footer {
-            background-color: #2d3748;
-            color: #e2e8f0;
-            padding: 1.5rem 2rem;
-            text-align: center;
-            font-size: 0.875rem;
-            border-top: 4px solid #3b82f6;
-        }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal.open {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: #ffffff;
-            padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease;
-        }
-        .modal.open .modal-content { transform: translateY(0); }
-        .modal-close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #6b7280;
-        }
-        .modal-close-button:hover { color: #374151; }
-        .toggle-admin-checkbox:checked + div { background-color: #2563eb; }
-        .toggle-admin-checkbox:checked + div:after { transform: translateX(100%); }
-        .toggle-admin-checkbox + div:after {
-            background-color: white;
-            border: 1px solid #d1d5db;
-            border-radius: 9999px;
-            height: 1.25rem;
-            width: 1.25rem;
-            transition: transform 0.2s ease;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333; display: flex; flex-direction: column; min-height: 100vh; }
+        header { background-color: #ffffff; padding: 1.5rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 2.25rem; font-weight: 800; background: linear-gradient(to right, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        main { flex-grow: 1; padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; }
+        footer { background-color: #2d3748; color: #e2e8f0; padding: 1.5rem 2rem; text-align: center; }
     </style>
 </head>
 <body>
-    <div id="app-root">
-        <header>
-            <div class="logo">
-                SDH
-                <span id="website-version" class="version-indicator"></span>
-            </div>
-            <div id="header-buttons-container" class="flex items-center space-x-4"></div>
-        </header>
-
-        <main id="main-content-area"></main>
-
-        <footer>
-            <p>&copy; <span id="current-year"></span> SDH. All rights reserved.</p>
-            <button id="request-file-button" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Request a File</button>
-        </footer>
-
-        <div id="custom-alert-modal" class="modal">
-            <div class="modal-content">
-                <button id="custom-alert-close-button" class="modal-close-button">&times;</button>
-                <h3 class="text-xl font-semibold mb-4">Notification</h3>
-                <p id="custom-alert-message" class="mb-6"></p>
-                <button id="custom-alert-ok-button" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">OK</button>
-            </div>
+    <header>
+        <div class="logo">SDH <span class="text-sm font-normal text-gray-400" id="version-tag"></span></div>
+        <div class="flex items-center gap-4">
+            <span id="user-display" class="text-sm font-medium text-gray-500"></span>
+            <button id="logout-btn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition-colors">Logout</button>
         </div>
+    </header>
 
-        <div id="manage-users-modal" class="modal">
-            <div class="modal-content">
-                <button id="close-manage-users-modal" class="modal-close-button">&times;</button>
-                <h3 class="text-2xl font-bold text-gray-800 mb-6">Manage Users (Admin Only)</h3>
-                <p class="text-red-500 text-sm mb-4">NOTE: This is a standalone website with no database. User management here is for demonstration purposes only and will not persist.</p>
-                <div class="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
-                    <h4 class="text-lg font-semibold text-blue-800 mb-2">Add New User (Insecure & Non-Persistent)</h4>
-                    <input type="email" id="new-user-email" placeholder="New User Email" class="w-full px-3 py-2 rounded-md border border-gray-300 mb-2" />
-                    <label class="inline-flex items-center mb-2">
-                        <input type="checkbox" id="new-user-is-admin" class="form-checkbox h-5 w-5 text-blue-600 rounded" />
-                        <span class="ml-2 text-gray-700">Is Admin</span>
-                    </label>
-                    <p id="add-user-message" class="text-sm mt-1"></p>
-                    <button id="add-user-button" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">Add User</button>
-                </div>
-
-                <h4 class="text-xl font-semibold text-gray-800 mb-4">Current Users (Non-Persistent)</h4>
-                <ul id="user-list" class="space-y-3 max-h-60 overflow-y-auto border border-gray-200 p-3 rounded-lg"></ul>
-            </div>
+    <main id="main-content">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
+            <div id="category-filters" class="flex gap-2"></div>
+            <input type="text" id="search-bar" placeholder="Search files..." class="px-4 py-2 rounded-xl border border-gray-300 w-full max-w-xs focus:ring-2 focus:ring-blue-500 outline-none" />
         </div>
-    </div>
+        <div id="download-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 SDH. All rights reserved.</p>
+    </footer>
 
     <script>
-        const HARDCODED_ACCESS_EMAIL = "stefan.mitarca@gmail.com";
-        const REQUEST_FILE_EMAIL = 'SDH_SUP@mail.com';
+        const SUPABASE_URL = 'https://davfpjqubzfxcwlwxmjg.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_S-IH7rZQwgSvGncHvbNkiA_ETrg-hWY';
+        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const WEBSITE_VERSION = 'v1.0.11';
-
-        let isAuthenticated = false;
-        let isAdminUser = false;
-        let userEmail = null;
-        let currentView = 'downloads';
-
-        let INSECURE_LOCAL_USERS = [
-            { id: 1, email: HARDCODED_ACCESS_EMAIL, is_admin: true },
-        ];
-        let nextUserId = 2;
-
-        function customAlert(message) {
-            const alertModal = document.getElementById('custom-alert-modal');
-            const alertMessage = document.getElementById('custom-alert-message');
-            const alertOkButton = document.getElementById('custom-alert-ok-button');
-            const closeButton = document.getElementById('custom-alert-close-button');
-            alertMessage.textContent = message;
-            alertModal.classList.add('open');
-            const closeAlert = () => {
-                alertModal.classList.remove('open');
-                alertOkButton.removeEventListener('click', closeAlert);
-                closeButton.removeEventListener('click', closeAlert);
-                alertModal.removeEventListener('click', handleOutsideClick);
-            };
-            const handleOutsideClick = (e) => { if (e.target === alertModal) closeAlert(); };
-            alertOkButton.addEventListener('click', closeAlert);
-            closeButton.addEventListener('click', closeAlert);
-            alertModal.addEventListener('click', handleOutsideClick);
-        }
-        window.alert = customAlert;
-
-        function darkenColor(hex, percent) {
-            let f = parseInt(hex.slice(1), 16), t = percent < 0 ? 0 : 255, p = percent < 0 ? -percent : percent,
-                R = f >> 16, G = (f >> 8) & 0x00ff, B = f & 0x0000ff;
-            return "#" + (0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 + (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
-        }
-
-        function createFileExtensionIcon(extension, colorClass) {
-            let fillColor = '#6B7280';
-            switch (colorClass) {
-                case 'text-red-500': fillColor = '#EF4444'; break;
-                case 'text-yellow-500': fillColor = '#F59E0B'; break;
-                case 'text-orange-500': fillColor = '#F97316'; break;
-                case 'text-blue-500': fillColor = '#3B82F6'; break;
-                case 'text-green-500': fillColor = '#22C55E'; break;
-                case 'text-teal-500': fillColor = '#14B8A6'; break;
-                case 'text-purple-500': fillColor = '#A855F7'; break;
-                case 'text-indigo-500': fillColor = '#6366F1'; break;
-                case 'text-pink-500': fillColor = '#EC4899'; break;
-                case 'text-lime-500': fillColor = '#84CC16'; break;
-            }
-            const foldedCornerColor = darkenColor(fillColor, 0.15);
-            let fontSize = '6px';
-            let yOffset = '14';
-            if (extension.length === 3) { fontSize = '5.5px'; yOffset = '13.5'; }
-            else if (extension.length === 4) { fontSize = '4.5px'; yOffset = '13'; }
-            else if (extension.length >= 5) { fontSize = '3.5px'; yOffset = '12.5'; }
-            if (extension.toUpperCase() === 'TRNT') { fontSize = '4px'; yOffset = '12.8'; }
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="w-16 h-16">
-                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7L15 2Z" fill="${fillColor}" filter="url(#shadow)"/>
-                <path d="M14 2v4a2 2 0 0 0 2 2h4L14 2Z" fill="${foldedCornerColor}"/>
-                <text x="12" y="${yOffset}" text-anchor="middle" font-size="${fontSize}" fill="white" font-family="sans-serif" font-weight="500">${extension.toUpperCase()}</text>
-                <defs><filter id="shadow"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.2)"/></filter></defs>
-            </svg>`;
-        }
-
-        let downloadItems = [
-            { id: 43, name: 'AmosOS.VMDK', description: 'Virtual machine disk image for AmosOS.', version: 'VMDK', size: '500 MB', link: 'https://www.mediafire.com/file/xnpr80v57dgafce/AmogOS-x86_64-1.5.0.vmdk/file', category: 'Files' },
-            { id: 44, name: 'Asus Eee PC p701 4g drivers', description: 'Drivers for Asus Eee PC p701 4g model.', version: 'Latest', size: '150 MB', link: 'https://www.mediafire.com/file/gru8ytwow6e29st/Asus_Eee_PC_p701_4g_surf.rar/file', category: 'Files' },
-            { id: 45, name: 'LegacyIOSapparchive', description: 'Torrent file for a legacy iOS app archive.', version: 'Torrent', size: '10 GB', link: 'https://www.mediafire.com/file/q7xd2j5grfcjdf7/legacyiosapparchive-archive.torrent/file', category: 'Files' },
-            { id: 46, name: 'PearOS Monterey x64', description: 'ISO image for PearOS Monterey x64 operating system.', version: 'x64', size: '4.5 GB', link: 'https://www.mediafire.com/file/5whk0hdpzha9a70/pearOS_Monterey.iso/file', category: 'Files' },
-            { id: 64, name: 'WSA_2407.40000.0.0_x64_Release-Nightly-GApps-13.0-NoAmazon', description: 'Windows Subsystem for Android (WSA) package with GApps.', version: '2407.40000.0.0', size: '1.2 GB', link: 'https://www.mediafire.com/file/r0v4h1mh15wz40u/WSA_2407.40000.0.0_x64_Release-Nightly-GApps-13.0-NoAmazon.rar/file', category: 'Files' },
-            { id: 30, name: 'Windows Device Recovery Tool installer', description: 'Official tool to recover and reset your Windows device.', version: 'Latest', size: '50 MB', link: 'https://www.mediafire.com/file/p1ntrhacznnzruu/WindowsDeviceRecoveryToolInstaller%25282%2529.exe/file', category: 'Apps' },
-            { id: 31, name: 'WPinternals', description: 'Advanced tool for Windows Phone customization and unlocking.', version: 'Latest', size: '30 MB', link: 'https://www.mediafire.com/file/pegzjbhdz161ula/WPinternals_2.8.zip/file', category: 'Apps' },
-            { id: 32, name: 'OTCupdater', description: 'Utility for updating Over-the-Cable devices.', version: 'Latest', size: '10 MB', link: 'https://www.mediafire.com/file/ovmuvd848qxjnwy/otcupdater.zip/file', category: 'Apps' },
-            { id: 35, name: 'Microsoft Office Professional Plus 2010', description: 'Comprehensive suite of productivity applications from Microsoft.', version: '2010', size: '1.5 GB', link: 'https://www.mediafire.com/file/wtkrrrx41nw9czb/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO/file', category: 'Apps' },
-            { id: 39, name: 'WinFast PVR2', description: 'Software for TV tuner cards, enabling TV viewing and recording.', version: 'Latest', size: '120 MB', link: 'https://www.mediafire.com/file/k67auoggsks4593/WinFast_PVR2.rar/file', category: 'Apps' },
-            { id: 40, name: 'BS.Player PRO', description: 'A versatile media player with advanced features.', version: '2.77.1092', size: '22 MB', link: 'https://www.mediafire.com/file/ter3b1x2adkse58/BS.Player_PRO_2.77.1092.rar/file', category: 'Apps' },
-            { id: 41, name: 'Movavi Video Converter', description: 'Powerful video converter for various formats.', version: '22.4.0', size: '65 MB', link: 'https://www.mediafire.com/file/ypkvosarq80uxjl/Movavi_Video_Converter_22.4.0_Premium_RePack_%2528%2526_Portable%2529_by_TryRooM.rar/file', category: 'Apps' },
-            { id: 42, name: 'Lossless Scaling', description: 'Utility for upscaling games and applications with minimal quality loss.', version: '2.9.0', size: '18 MB', link: 'https://www.mediafire.com/file/o6qf8kuvx1gxhie/Lossless.Scaling.v2.9.0.rar/file', category: 'Apps' },
-            { id: 9, name: 'The Long Drive', description: 'A challenging and atmospheric driving survival game.', version: 'Latest', size: '550 MB', link: 'https://www.mediafire.com/file/z9e5yp6fu5ixon2/The-Long-Drive.rar/file', category: 'Games' },
-            { id: 10, name: 'Super WorldBox', description: 'A god simulation game where you can create and destroy worlds.', version: '0.13.9', size: '130 MB', link: 'https://www.mediafire.com/file/trrnehgvjp47mvr/WorldBox.v0.13.9.rar/file', category: 'Games' },
-            { id: 28, name: 'Zuma Deluxe', description: 'A classic marble-matching puzzle game.', version: '1.0', size: '16 MB', link: 'https://www.mediafire.com/file/733zs7umv0yggem/Zuma.Deluxe.zip/file', category: 'Games' },
-            { id: 29, name: 'Zuma Revenge', description: 'The sequel to the popular Zuma Deluxe, with new challenges.', version: '1.0', size: '55 MB', link: 'https://www.mediafire.com/file/qqjt5v9utok2jbd/Zumas.Revenge.zip/file', category: 'Games' },
-        ];
-
-        downloadItems.forEach(item => {
-            const url = new URL(item.link);
-            const pathSegments = url.pathname.split('/').filter(s => s !== '');
-            let filename = '';
-            if (pathSegments.length > 0) {
-                filename = (pathSegments[pathSegments.length - 1] === 'file' && pathSegments.length > 1)
-                    ? pathSegments[pathSegments.length - 2]
-                    : pathSegments[pathSegments.length - 1];
-            }
-            filename = String(filename || '');
-            const parts = filename.split('.');
-            let extension = parts.length > 1 ? parts[parts.length - 1] : '';
-            if (extension === 'file' && filename.includes('.torrent')) extension = 'torrent';
-            let colorClass = 'text-gray-500';
-            switch ((extension || '').toLowerCase()) {
-                case 'vmdk': case 'iso': colorClass = 'text-red-500'; break;
-                case 'rar': case 'zip': colorClass = 'text-yellow-500'; break;
-                case 'torrent': colorClass = 'text-orange-500'; break;
-                case 'exe': colorClass = 'text-blue-500'; break;
-                case 'mp3': colorClass = 'text-green-500'; break;
-                case 'cab': colorClass = 'text-purple-500'; break;
-                case 'apk': colorClass = 'text-lime-500'; break;
-                case 'apps': colorClass = 'text-indigo-500'; break;
-                case 'games': colorClass = 'text-pink-500'; break;
-            }
-            let displayExtension = extension;
-            if (!extension && item.category === 'Apps') { displayExtension = 'APP'; colorClass = 'text-indigo-500'; }
-            else if (!extension && item.category === 'Games') { displayExtension = 'GAME'; colorClass = 'text-pink-500'; }
-            else if (!extension && item.category === 'APK') { displayExtension = 'APK'; colorClass = 'text-lime-500'; }
-            else if (extension === 'file' && item.link.includes('.torrent')) { displayExtension = 'TRNT'; colorClass = 'text-orange-500'; }
-            item.icon = createFileExtensionIcon(displayExtension || 'FILE', colorClass);
-        });
-
-        function toProxyUrl(originalUrl) {
-            try {
-                const u = new URL(originalUrl);
-                const withoutProtocol = u.href.replace(/^https?:\/\//i, '');
-                return `https://r.jina.ai/http://${withoutProtocol}`;
-            } catch { return null; }
-        }
-        function parseHumanFileSizeFromText(text) {
-            const keywordPattern = /(file\s*size|size|filesize)[^\n]{0,80}?(\d+(?:[.,]\d+)?)(\s*)(TB|GB|MB|KB|B)/i;
-            let match = text.match(keywordPattern);
-            if (!match) match = text.match(/(\d+(?:[.,]\d+)?)(\s*)(TB|GB|MB|KB|B)/i);
-            if (!match) return null;
-            let value = match[2] || match[1];
-            let unit = (match[5] || match[3] || '').toUpperCase();
-            value = value.replace(',', '.');
-            const numeric = parseFloat(value);
-            if (!isFinite(numeric)) return null;
-            return `${numeric % 1 === 0 ? numeric.toFixed(0) : numeric.toFixed(2)} ${unit}`;
-        }
-        async function fetchAndUpdateItemSize(item) {
-            const proxyUrl = toProxyUrl(item.link);
-            if (!proxyUrl) return;
-            try {
-                const resp = await fetch(proxyUrl, { method: 'GET' });
-                if (!resp.ok) return;
-                const text = await resp.text();
-                const parsed = parseHumanFileSizeFromText(text);
-                if (parsed) {
-                    item.size = parsed;
-                    const el = document.getElementById(`size-${item.id}`);
-                    if (el) el.textContent = parsed;
-                }
-            } catch {}
-        }
-        async function updateAllItemSizes() {
-            await Promise.all(downloadItems.map(fetchAndUpdateItemSize));
-        }
-
         let activeCategory = 'All';
         let searchQuery = '';
 
-        const headerButtonsContainer = document.getElementById('header-buttons-container');
-        const mainContentArea = document.getElementById('main-content-area');
-        const currentYearSpan = document.getElementById('current-year');
-        const websiteVersionSpan = document.getElementById('website-version');
-        const manageUsersModal = document.getElementById('manage-users-modal');
-        const closeManageUsersModalButton = document.getElementById('close-manage-users-modal');
-        const newUserEmailInput = document.getElementById('new-user-email');
-        const newUserIsAdminCheckbox = document.getElementById('new-user-is-admin');
-        const addUserMessage = document.getElementById('add-user-message');
-        const addUserButton = document.getElementById('add-user-button');
-        const userListElement = document.getElementById('user-list');
+        // --- AUTH GUARD ---
+        async function validateAccess() {
+            const { data } = await sbClient.auth.getSession();
+            const isGuest = sessionStorage.getItem('sdh_guest') === 'true';
 
-        if (currentYearSpan) currentYearSpan.textContent = new Date().getFullYear();
-        if (websiteVersionSpan) websiteVersionSpan.textContent = WEBSITE_VERSION;
+            if (!data.session && !isGuest) {
+                window.location.href = 'auth.html';
+                return;
+            }
 
-        async function generateDescription(itemId, currentName, currentDescription) {
-            // Left as-is from previous version; requires API key to work
-            customAlert('AI description generation requires internet and API key.');
+            document.getElementById('user-display').textContent = data.session ? data.session.user.email : 'Guest Mode';
+            renderDownloads();
         }
 
-        function renderAuthPage() {
-            mainContentArea.innerHTML = `
-                <div class="flex items-center justify-center min-h-[calc(100vh-16rem)]">
-                    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md text-center">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to SDH</h2>
-                        <p class="text-gray-600 mb-6">Enter your email address to access the downloads, or proceed anonymously.</p>
-                        <div class="space-y-4">
-                            <input type="email" id="auth-email" placeholder="Enter Email Address" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-lg" />
-                            <p id="auth-error-message" class="text-red-500 text-sm hidden"></p>
-                            <button id="access-button" class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">Login as Admin</button>
-                            <button id="anonymous-access-button" class="w-full px-6 py-3 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:scale-105">Continue Anonymously</button>
-                        </div>
-                    </div>
-                </div>`;
-            const authEmailInput = document.getElementById('auth-email');
-            const accessButton = document.getElementById('access-button');
-            const anonymousAccessButton = document.getElementById('anonymous-access-button');
-            const errorMessage = document.getElementById('auth-error-message');
-            const attemptAdminLogin = () => {
-                const email = authEmailInput.value.toLowerCase().trim();
-                if (email === HARDCODED_ACCESS_EMAIL) {
-                    isAuthenticated = true; userEmail = HARDCODED_ACCESS_EMAIL; isAdminUser = true;
-                    sessionStorage.setItem('isAuthenticated', 'true');
-                    sessionStorage.setItem('userEmail', userEmail);
-                    sessionStorage.setItem('isAdminUser', 'true');
-                    errorMessage.classList.add('hidden'); currentView = 'downloads'; renderApp();
-                } else { errorMessage.textContent = "Incorrect email address for admin login."; errorMessage.classList.remove('hidden'); }
-            };
-            accessButton.onclick = attemptAdminLogin;
-            authEmailInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); attemptAdminLogin(); } });
-            anonymousAccessButton.onclick = () => {
-                isAuthenticated = true; userEmail = "Guest User"; isAdminUser = false;
-                sessionStorage.setItem('isAuthenticated', 'true');
-                sessionStorage.setItem('userEmail', userEmail);
-                sessionStorage.setItem('isAdminUser', 'false');
-                currentView = 'downloads'; renderApp();
-            };
-        }
+        document.getElementById('logout-btn').onclick = async () => {
+            await sbClient.auth.signOut();
+            sessionStorage.removeItem('sdh_guest');
+            window.location.href = 'auth.html';
+        };
 
-        function logoutUser() {
-            isAuthenticated = false; isAdminUser = false; userEmail = null;
-            sessionStorage.removeItem('isAuthenticated');
-            sessionStorage.removeItem('userEmail');
-            sessionStorage.removeItem('isAdminUser');
-            customAlert("You have been logged out.");
-            renderApp();
-        }
+        // --- DOWNLOAD DATA ---
+        const downloadItems = [
+            { name: 'AmosOS.VMDK', desc: 'Virtual machine disk image.', ver: 'VMDK', size: '500 MB', cat: 'Files', link: 'https://www.mediafire.com/file/xnpr80v57dgafce/AmogOS-x86_64-1.5.0.vmdk/file' },
+            { name: 'Asus drivers', desc: 'Drivers for Asus Eee PC p701 4g.', ver: 'Latest', size: '150 MB', cat: 'Files', link: 'https://www.mediafire.com/file/gru8ytwow6e29st/Asus_Eee_PC_p701_4g_surf.rar/file' },
+            { name: 'Super WorldBox', desc: 'A god simulation game.', ver: '0.13.9', size: '130 MB', cat: 'Games', link: 'https://www.mediafire.com/file/trrnehgvjp47mvr/WorldBox.v0.13.9.rar/file' },
+            { name: 'Zuma Deluxe', desc: 'Classic marble-matching puzzle.', ver: '1.0', size: '16 MB', cat: 'Games', link: 'https://www.mediafire.com/file/733zs7umv0yggem/Zuma.Deluxe.zip/file' }
+        ];
 
-        function renderDownloadsSection() {
-            const filteredDownloads = downloadItems.filter(item => {
-                const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
-                const q = searchQuery.toLowerCase();
-                const matchesSearch = q === '' || item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
-                return matchesCategory && matchesSearch;
+        function renderDownloads() {
+            const grid = document.getElementById('download-grid');
+            const filtered = downloadItems.filter(i => {
+                const matchCat = activeCategory === 'All' || i.cat === activeCategory;
+                const matchSearch = i.name.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchCat && matchSearch;
             });
-            const currentSearchInputId = 'search-input';
-            const currentSearchInputValue = searchQuery;
-            let downloadsHtml = `
-                <section class="mb-12">
-                    <div class="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 mb-10">
-                        <div id="category-buttons-container" class="flex flex-wrap justify-center sm:justify-start gap-4 order-2 sm:order-1"></div>
-                        <div class="relative w-full sm:w-auto flex-grow sm:flex-grow-0 order-1 sm:order-2 max-w-md">
-                            <input type="text" placeholder="Search" class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg" id="${currentSearchInputId}" value="${currentSearchInputValue}" />
-                            ${searchQuery ? `<button id="clear-search-button" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">` +
-                                `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"w-6 h-6\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>` +
-                                `</button>` : ''}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        </div>
+
+            grid.innerHTML = filtered.map(item => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
+                    <p class="text-gray-500 text-sm mb-4 flex-grow">${item.desc}</p>
+                    <div class="flex justify-between text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wider">
+                        <span>${item.ver}</span><span>${item.size}</span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">`;
-            if (filteredDownloads.length > 0) {
-                filteredDownloads.forEach(item => {
-                    downloadsHtml += `
-                        <div class=\"bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col\">
-                            <div class=\"p-6 flex flex-col items-center text-center\">
-                                <div class=\"mb-4\">${item.icon}</div>
-                                <h3 class=\"text-xl font-semibold text-gray-900 mb-2\">${item.name}</h3>
-                                <p class=\"text-gray-600 text-sm mb-4 flex-grow\" id=\"description-${item.id}\">${item.description}</p>
-                                <div class=\"flex justify-between items-center w-full text-sm text-gray-500 mb-4\">
-                                    <span>Version: ${item.version}</span>
-                                    <span>Size: <span id=\"size-${item.id}\">${item.size || 'Loading…'}</span></span>
-                                </div>
-                                <a href=\"${item.link}\" class=\"inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105\" download>
-                                    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"w-5 h-5 mr-2\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" x2=\"12\" y1=\"15\" y2=\"3\"/></svg>
-                                    Download Now
-                                </a>
-                                ${isAdminUser ? `<button id=\"generate-desc-button-${item.id}\" class=\"mt-4 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105\" onclick=\"generateDescription(${item.id}, '${item.name.replace(/'/g, "\\'")}', '${item.description.replace(/'/g, "\\'")}')\">Generate Description (AI)</button>` : ''}
-                            </div>
-                        </div>`;
-                });
-            } else {
-                downloadsHtml += `<div class="col-span-full text-center text-gray-600 text-lg py-10">No downloads found in this category or matching your search.</div>`;
-            }
-            downloadsHtml += `</div></section>`;
-            mainContentArea.innerHTML = downloadsHtml;
+                    <a href="${item.link}" target="_blank" class="block w-full py-3 text-center bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors">Download</a>
+                </div>
+            `).join('');
 
-            const searchInput = document.getElementById(currentSearchInputId);
-            if (searchInput) {
-                searchInput.oninput = (e) => { searchQuery = e.target.value; renderDownloadsSection(); };
-                searchInput.focus();
-                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-            }
-            const clearSearchButton = document.getElementById('clear-search-button');
-            if (clearSearchButton) clearSearchButton.onclick = () => { searchQuery = ''; renderDownloadsSection(); };
-            const categoryButtonsContainer = document.getElementById('category-buttons-container');
-            if (categoryButtonsContainer) {
-                ['All', 'Apps', 'Games', 'Files', 'APK'].forEach(category => {
-                    const button = document.createElement('button');
-                    button.textContent = category;
-                    button.className = `${activeCategory === category ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'} px-6 py-2 rounded-xl text-lg font-medium transition-all duration-300`;
-                    button.onclick = () => { activeCategory = category; searchQuery = ''; renderDownloadsSection(); };
-                    categoryButtonsContainer.appendChild(button);
-                });
-            }
+            renderFilters();
         }
 
-        function renderTutorialsSection() {
-            mainContentArea.innerHTML = `
-                <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Written Tutorials</h2>
-                    <p class="text-lg text-gray-700 mb-4">Welcome to the SDH Tutorials section! Here you'll find guides and instructions to help you make the most of our downloads and related tools.</p>
-                    <div class="space-y-6">
-                        <div class="border-b pb-4"><h3 class="text-xl font-semibold text-gray-900 mb-2">1. Getting Started with Windows Device Recovery Tool</h3><p class="text-gray-600">Learn how to use the Windows Device Recovery Tool to fix issues with your Windows phone or tablet. This tutorial covers installation, device detection, and flashing firmware.</p><a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a></div>
-                        <div class="border-b pb-4"><h3 class="text-xl font-semibold text-gray-900 mb-2">2. Basic Usage of Adobe Photoshop 2023</h3><p class="text-gray-600">A beginner-friendly guide to Adobe Photoshop 2023. Understand the interface, basic tools, and how to perform common image editing tasks.</p><a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a></div>
-                        <div class="border-b pb-4"><h3 class="text-xl font-semibold text-gray-900 mb-2">3. Installing Microsoft Office Professional Plus 2010</h3><p class="text-gray-600">Step-by-step instructions for installing Microsoft Office Professional Plus 2010 from an ISO file.</p><a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a></div>
-                        <div class="border-b pb-4"><h3 class="text-xl font-semibold text-gray-900 mb-2">4. Playing GTA SA on Modern Systems</h3><p class="text-gray-600">Tips and tricks to get Grand Theft Auto: San Andreas running smoothly on newer operating systems, including common fixes and recommended mods.</p><a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a></div>
-                        <div><h3 class="text-xl font-semibold text-gray-900 mb-2">5. Understanding VMDK Files and Virtual Machines</h3><p class="text-gray-600">An introduction to VMDK file format and how to use them with virtualization software like VMware or VirtualBox.</p><a href="#" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read More</a></div>
-                    </div>
-                    <p class="text-center text-gray-500 mt-8">More tutorials coming soon!</p>
-                </div>`;
-        }
-
-        function renderAdminSection() {
-            mainContentArea.innerHTML = `
-                <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white rounded-xl shadow-lg">
-                    <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-orange-700 drop-shadow-md">Admin Panel (Standalone - No Persistent Data)</h2>
-                    <p class="text-red-500 text-sm mb-6 text-center font-semibold">WARNING: This section is for demonstration only. Changes here will NOT be saved as there is no database. All data is hardcoded in the website's code.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button id="manage-users-button" class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Manage Users (Demo)
-                        </button>
-                        <button class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105 col-span-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M12 17.5V3"/><path d="M4.2 12.5 12 3l7.8 9.5"/><path d="M10 16h4"/><path d="M8 20h8"/><path d="M6 24h12"/></svg>
-                            Manage Downloads (Demo)
-                        </button>
-                        <button class="flex items-center justify-center px-8 py-4 text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-300 transform hover:scale-105 col-span-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M3 3v18h18"/><path d="M18.7 8.3L12 15l-3.3-3.3L3 18"/><path d="m18 3 6 6"/></svg>
-                            View Analytics (Demo)
-                        </button>
-                    </div>
-                </div>`;
-            document.getElementById('manage-users-button').onclick = showManageUsersModal;
-        }
-
-        async function showManageUsersModal() {
-            if (!isAdminUser) { customAlert("You must be an admin to manage users."); return; }
-            manageUsersModal.classList.add('open');
-            renderUserList();
-        }
-        function hideManageUsersModal() { manageUsersModal.classList.remove('open'); addUserMessage.textContent = ''; newUserEmailInput.value = ''; newUserIsAdminCheckbox.checked = false; }
-        function renderUserList() {
-            userListElement.innerHTML = '';
-            INSECURE_LOCAL_USERS.forEach(user => {
-                const listItem = document.createElement('li');
-                listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200';
-                const displayEmail = user.email;
-                listItem.innerHTML = `
-                    <span class="font-medium text-gray-800 break-all mr-2">${displayEmail} ${user.is_admin ? '(Admin)' : ''}</span>
-                    <div class="flex items-center space-x-3">
-                        ${displayEmail === userEmail ? `<span class="text-gray-500 text-sm italic">(Current User)</span>` : `
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" data-id="${user.id}" data-email="${displayEmail}" ${user.is_admin ? 'checked' : ''} class="toggle-admin-checkbox sr-only" />
-                                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                <span class="ml-2 text-sm font-medium text-gray-900">Admin</span>
-                            </label>
-                            <button data-id="${user.id}" data-email="${displayEmail}" class="remove-user-button px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded-md hover:bg-red-600 transition-colors">Remove</button>
-                        `}
-                    </div>`;
-                userListElement.appendChild(listItem);
+        function renderFilters() {
+            const cont = document.getElementById('category-filters');
+            cont.innerHTML = '';
+            ['All', 'Apps', 'Games', 'Files'].forEach(cat => {
+                const btn = document.createElement('button');
+                btn.textContent = cat;
+                btn.className = `px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeCategory === cat ? 'bg-blue-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'}`;
+                btn.onclick = () => { activeCategory = cat; renderDownloads(); };
+                cont.appendChild(btn);
             });
-            userListElement.querySelectorAll('.remove-user-button').forEach(button => { button.onclick = (event) => removeUser(event.target.dataset.id, event.target.dataset.email); });
-            userListElement.querySelectorAll('.toggle-admin-checkbox').forEach(checkbox => { checkbox.onchange = (event) => toggleAdminStatus(event.target.dataset.id, event.target.dataset.email); });
-        }
-        function addUser() {
-            const email = newUserEmailInput.value.toLowerCase().trim();
-            const isAdmin = newUserIsAdminCheckbox.checked;
-            if (!isAdminUser) { customAlert("You must be logged in as an admin to add users."); return; }
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) { addUserMessage.textContent = "Please enter a valid email address."; addUserMessage.className = "text-red-500 text-sm mt-1"; return; }
-            if (INSECURE_LOCAL_USERS.some(u => u.email === email)) { addUserMessage.textContent = "This email address already exists (in this session)."; addUserMessage.className = "text-red-500 text-sm mt-1"; return; }
-            INSECURE_LOCAL_USERS.push({ id: nextUserId++, email, is_admin: isAdmin });
-            addUserMessage.textContent = `User "${email}" added successfully (for this session)!`;
-            addUserMessage.className = "text-green-600 text-sm mt-1";
-            newUserEmailInput.value = '';
-            newUserIsAdminCheckbox.checked = false;
-            renderUserList();
-        }
-        function removeUser(userId, emailToRemove) {
-            if (!isAdminUser) { customAlert("You must be logged in as an admin to remove users."); return; }
-            if (emailToRemove === userEmail) { customAlert("You cannot remove your own account while logged in."); return; }
-            INSECURE_LOCAL_USERS = INSECURE_LOCAL_USERS.filter(user => user.id != userId);
-            customAlert(`User "${emailToRemove}" removed successfully (for this session).`);
-            renderUserList();
-        }
-        function toggleAdminStatus(userId, emailToToggle) {
-            if (!isAdminUser) { customAlert("You must be logged in as an admin to change user roles."); renderUserList(); return; }
-            const user = INSECURE_LOCAL_USERS.find(u => u.id == userId);
-            if (user) { user.is_admin = !user.is_admin; customAlert(`Admin status for "${emailToToggle}" updated to ${user.is_admin} (for this session).`); renderUserList(); }
-            else { customAlert("User not found (in this session)."); renderUserList(); }
-        }
-        if (closeManageUsersModalButton) closeManageUsersModalButton.onclick = hideManageUsersModal;
-        if (addUserButton) addUserButton.onclick = addUser;
-        if (manageUsersModal) manageUsersModal.addEventListener('click', (e) => { if (e.target === manageUsersModal) hideManageUsersModal(); });
-
-        function renderApp() {
-            if (headerButtonsContainer) {
-                headerButtonsContainer.innerHTML = '';
-                if (isAuthenticated) {
-                    const tutorialsButton = document.createElement('button');
-                    tutorialsButton.textContent = "Tutorials";
-                    tutorialsButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'tutorials' ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
-                    tutorialsButton.onclick = () => { currentView = 'tutorials'; renderApp(); };
-                    headerButtonsContainer.appendChild(tutorialsButton);
-                    if (isAdminUser) {
-                        const adminButton = document.createElement('button');
-                        adminButton.textContent = "Admin";
-                        adminButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'admin' ? 'bg-red-100 text-red-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
-                        adminButton.onclick = () => { currentView = 'admin'; renderApp(); };
-                        headerButtonsContainer.appendChild(adminButton);
-                    }
-                    const homeButton = document.createElement('button');
-                    homeButton.textContent = "Home";
-                    homeButton.className = `px-4 py-2 text-lg font-medium rounded-md transition-colors duration-200 ${currentView === 'downloads' ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`;
-                    homeButton.onclick = () => { currentView = 'downloads'; renderApp(); };
-                    headerButtonsContainer.appendChild(homeButton);
-                    const userProfileContainer = document.createElement('div');
-                    userProfileContainer.className = "relative group ml-4";
-                    const userInfoButton = document.createElement('button');
-                    userInfoButton.className = "flex items-center gap-2 px-8 py-4 text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105";
-                    userInfoButton.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-white"><circle cx="12" cy="7" r="4"/><path d="M12 15c-3.5 0-6.5 2-9 6h18c-2.5-4-5.5-6-9-6z"/></svg>
-                        <span class="hidden sm:block">${userEmail || 'Guest'}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 text-white"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
-                    userProfileContainer.appendChild(userInfoButton);
-                    const dropdownMenu = document.createElement('div');
-                    dropdownMenu.className = "absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg py-1 opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-hover:block z-10";
-                    dropdownMenu.innerHTML = `
-                        <div class="block w-full text-left px-8 py-4 text-sm text-gray-700">User: <span class="font-bold break-all">${userEmail || 'Guest'}</span></div>
-                        <button id="logout-button" class="block w-full text-left px-8 py-4 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 transform hover:scale-105">Logout</button>`;
-                    userProfileContainer.appendChild(dropdownMenu);
-                    headerButtonsContainer.appendChild(userProfileContainer);
-                    document.getElementById('logout-button').onclick = logoutUser;
-                }
-            }
-            if (isAuthenticated) {
-                if (currentView === 'downloads') renderDownloadsSection();
-                else if (currentView === 'tutorials') renderTutorialsSection();
-                else if (currentView === 'admin' && isAdminUser) renderAdminSection();
-                else { currentView = 'downloads'; renderDownloadsSection(); }
-            } else {
-                renderAuthPage();
-            }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const storedEmail = sessionStorage.getItem('userEmail');
-            const storedIsAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
-            const storedIsAdminUser = sessionStorage.getItem('isAdminUser') === 'true';
-            if (storedIsAuthenticated) {
-                if (storedEmail === HARDCODED_ACCESS_EMAIL && storedIsAdminUser) { isAuthenticated = true; userEmail = HARDCODED_ACCESS_EMAIL; isAdminUser = true; }
-                else if (storedEmail === "Guest User" && !storedIsAdminUser) { isAuthenticated = true; userEmail = "Guest User"; isAdminUser = false; }
-            }
-            renderApp();
-            const requestFileButton = document.getElementById('request-file-button');
-            if (requestFileButton) {
-                requestFileButton.onclick = () => {
-                    const subject = encodeURIComponent("File Request from SDH Website");
-                    const body = encodeURIComponent("I would like to request a specific file. Please provide details about the file you are looking for here:\n\n");
-                    const mailtoLink = `mailto:${REQUEST_FILE_EMAIL}?subject=${subject}&body=${body}`;
-                    window.location.href = mailtoLink;
-                };
-            }
-            updateAllItemSizes();
-        });
+        document.getElementById('search-bar').oninput = (e) => {
+            searchQuery = e.target.value;
+            renderDownloads();
+        };
 
-        window.generateDescription = generateDescription;
+        document.getElementById('version-tag').textContent = WEBSITE_VERSION;
+        validateAccess();
     </script>
 </body>
 </html>
