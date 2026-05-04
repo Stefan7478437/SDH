@@ -58,7 +58,6 @@
 
     <main class="max-w-7xl mx-auto px-6 mt-12">
         
-        <!-- Simplified Action Bar -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
             <!-- Navigation -->
             <div id="category-filters" class="flex flex-wrap gap-3">
@@ -70,7 +69,7 @@
 
             <!-- Search -->
             <div class="relative w-full lg:w-96">
-                <input type="text" id="search-input" placeholder="Search resources..." class="bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all placeholder-slate-500">
+                <input type="text" id="search-input" placeholder="Search..." class="bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all placeholder-slate-500">
                 <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
@@ -79,7 +78,6 @@
 
         <p id="status-text" class="hidden text-center mb-8 text-blue-400 font-bold tracking-widest text-xs uppercase">🛠️ ADMIN EDIT MODE ACTIVE</p>
 
-        <!-- Content Grid -->
         <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </main>
 
@@ -127,7 +125,7 @@
                 return matchesSearch && matchesCategory;
             });
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">No items found.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">Empty.</div>';
                 return;
             }
             filtered.forEach(item => {
