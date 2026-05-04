@@ -8,15 +8,28 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CRITICAL: Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f9fafb; margin: 0; }
         .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(229, 231, 235, 0.5); }
+        
         .category-btn { transition: all 0.2s ease; background: white; color: #6b7280; border: 1px solid #e5e7eb; }
         .category-btn.active { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
+        
         .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
+
+        /* THE FIX: This pseudo-element creates an invisible bridge between the button and menu */
+        .dropdown-container::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            height: 20px; /* Adjust this to match the gap size */
+            background: transparent;
+        }
+
         .admin-feature { display: none; } 
         .edit-active .edit-badge { display: flex; }
     </style>
@@ -27,7 +40,8 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">SDH</h1>
             
-            <div class="relative group">
+            <!-- Added dropdown-container class here -->
+            <div class="relative group dropdown-container">
                 <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gray-100 group-hover:bg-gray-200 cursor-pointer transition-colors">
                     <span id="user-display" class="text-sm font-bold text-gray-700">Guest Mode</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,7 +49,8 @@
                     </svg>
                 </div>
 
-                <div class="absolute right-0 mt-1 w-52 pt-2 hidden group-hover:block z-50">
+                <!-- Increased mt-1 to mt-2 for better spacing, handled by the CSS bridge -->
+                <div class="absolute right-0 mt-2 w-52 hidden group-hover:block z-50">
                     <div class="bg-white border border-gray-100 rounded-2xl shadow-xl p-2 ring-1 ring-black ring-opacity-5">
                         <button id="admin-edit-toggle" class="admin-feature w-full text-left px-4 py-2.5 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-2 mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,9 +90,7 @@
             <button data-cat="miscellaneous" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Miscellaneous</button>
         </div>
 
-        <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Items load here -->
-        </div>
+        <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </main>
 
     <script>
@@ -104,13 +117,11 @@
 
             if (session) {
                 userDisplay.textContent = session.user.email;
-                
-                // Fetch user role from profiles table
-                const { data: profile, error } = await sbClient
+                const { data: profile } = await sbClient
                     .from('profiles')
                     .select('role')
                     .eq('id', session.user.id)
-                    .maybeSingle(); // maybeSingle prevents errors if profile is missing
+                    .maybeSingle();
 
                 if (profile && profile.role === 'admin') {
                     adminElements.forEach(el => el.style.display = 'flex');
@@ -120,15 +131,8 @@
         }
 
         async function fetchData() {
-            const { data, error } = await sbClient
-                .from('downloads')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (!error) { 
-                currentData = data; 
-                renderItems(); 
-            }
+            const { data, error } = await sbClient.from('downloads').select('*').order('created_at', { ascending: false });
+            if (!error) { currentData = data; renderItems(); }
         }
 
         function renderItems(filter = 'all') {
@@ -138,7 +142,6 @@
             filtered.forEach(item => {
                 const card = document.createElement('div');
                 card.className = `bg-white border border-gray-100 rounded-[2rem] p-7 card-hover flex flex-col justify-between relative overflow-hidden ${editMode ? 'edit-active' : ''}`;
-                
                 card.innerHTML = `
                     <div class="edit-badge hidden absolute top-4 right-4 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:scale-110 z-10" onclick="editItem('${item.id}')">
                         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
@@ -157,7 +160,6 @@
             });
         }
 
-        // Toggle Edit Mode Logic
         document.getElementById('admin-edit-toggle').onclick = () => {
             editMode = !editMode;
             statusText.textContent = editMode ? "🛠️ ADMIN EDIT MODE ACTIVE" : "Browse our library of software and tools.";
@@ -165,38 +167,24 @@
             renderItems();
         };
 
-        // Edit function
         window.editItem = async (id) => {
             const item = currentData.find(i => i.id === id);
             const newName = prompt("Edit Name:", item.name);
             if (newName === null) return;
             const newUrl = prompt("Edit URL:", item.url);
-
-            const { error } = await sbClient
-                .from('downloads')
-                .update({ name: newName, url: newUrl })
-                .eq('id', id);
-            
-            if (error) alert(error.message);
-            else fetchData();
+            const { error } = await sbClient.from('downloads').update({ name: newName, url: newUrl }).eq('id', id);
+            if (error) alert(error.message); else fetchData();
         };
 
-        // Add New Item function
         document.getElementById('admin-add-item').onclick = async () => {
             const name = prompt("Item Name:");
             if (!name) return;
             const category = prompt("Category (applications, games, miscellaneous):", "applications");
             const url = prompt("Download URL:");
-
-            const { error } = await sbClient
-                .from('downloads')
-                .insert([{ name, category, url, icon: '📦', size: 'N/A' }]);
-            
-            if (error) alert(error.message);
-            else fetchData();
+            const { error } = await sbClient.from('downloads').insert([{ name, category, url, icon: '📦', size: 'N/A' }]);
+            if (error) alert(error.message); else fetchData();
         };
 
-        // Filter functionality
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -211,7 +199,6 @@
             window.location.href = 'auth.html';
         };
 
-        // Start the app
         checkSession();
     </script>
 </body>
