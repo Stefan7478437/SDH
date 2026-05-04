@@ -65,14 +65,14 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        /* Dropdown: Matches exact width of trigger */
         .dropdown-menu-container {
             top: 100%;
             left: 0;
-            right: 0; /* Forces full width of parent .relative */
+            right: 0;
             padding-top: 0;
         }
 
+        /* Default state: Admin features hidden until permission check passes */
         .admin-feature { display: none; } 
         .edit-active .edit-badge { display: flex; }
     </style>
@@ -81,12 +81,9 @@
 
     <nav class="header-defined sticky top-0 z-50 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <!-- Branding: AFT Studio -->
             <h1 class="text-3xl font-black text-white tracking-tight">AFT <span class="text-blue-400">Studio</span></h1>
             
-            <!-- This relative container defines the width for the dropdown -->
             <div class="relative group">
-                <!-- Trigger Box -->
                 <div class="flex items-center gap-2 px-4 py-2 rounded-t-2xl rounded-b-2xl group-hover:rounded-b-none border border-slate-700 bg-slate-800/40 group-hover:bg-slate-800 cursor-pointer transition-all shadow-inner">
                     <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,7 +96,6 @@
                     </svg>
                 </div>
 
-                <!-- Dropdown Menu: Width is synced to Trigger Box above -->
                 <div class="absolute dropdown-menu-container hidden group-hover:block z-50">
                     <div class="theme-bg-match border-x border-b border-slate-700 rounded-b-2xl shadow-2xl p-2 ring-1 ring-black ring-opacity-5">
                         <button id="admin-edit-toggle" class="admin-feature w-full text-left px-4 py-2.5 text-sm font-bold text-blue-400 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-2 mb-1">
@@ -114,7 +110,7 @@
                             </svg>
                             New
                         </button>
-                        <hr class="admin-feature my-1 border-slate-700">
+                        <hr id="admin-divider" class="admin-feature my-1 border-slate-700">
                         <button id="logout-btn" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-400 hover:bg-slate-800 rounded-xl transition-colors">
                             Logout
                         </button>
@@ -156,10 +152,20 @@
         async function checkSession() {
             const { data: { session } } = await sbClient.auth.getSession();
             const isGuest = sessionStorage.getItem('sdh_guest') === 'true';
+
             if (!session && !isGuest) { window.location.href = 'auth.html'; return; }
+
             if (session) {
                 userDisplay.textContent = session.user.email;
-                const { data: profile } = await sbClient.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+                
+                // Fetch the user's role from the 'profiles' table
+                const { data: profile, error } = await sbClient
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                // Only show admin features if role is explicitly 'admin'
                 if (profile && profile.role === 'admin') {
                     adminElements.forEach(el => el.style.display = 'flex');
                 }
