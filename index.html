@@ -16,9 +16,9 @@
         .btn-gradient { background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; transition: all 0.3s ease; border: none; display: flex; align-items: center; justify-content: center; }
         .btn-gradient:hover { filter: brightness(1.2); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); }
         
-        .category-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; transition: all 0.2s ease; cursor: pointer; }
+        .category-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; transition: all 0.2s ease; cursor: pointer; white-space: nowrap; }
         .category-btn:hover { background: #334155; color: white; }
-        .category-btn.active { background: #3b82f6 !important; color: white !important; border-color: #60a5fa !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        .category-btn.active { background: #3b82f6 !important; color: white !important; border-color: #60a5fa !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
 
         .card-custom { background-color: #1e293b; border: 1px solid #334155; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-custom:hover { transform: translateY(-6px); border-color: #475569; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
@@ -57,27 +57,27 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 mt-12">
-        <!-- Dashboard Header -->
-        <div class="mb-12">
-            <h2 class="text-4xl font-extrabold text-white tracking-tight">Library</h2>
-            <p id="status-text" class="text-slate-400 mt-2 font-medium">Browse our library of software.</p>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
-            <!-- Category Buttons Container -->
-            <div id="category-filters" class="flex flex-wrap gap-2">
-                <button class="category-btn active px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest" data-category="all">All</button>
-                <button class="category-btn px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest" data-category="applications">Applications</button>
-                <button class="category-btn px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest" data-category="games">Games</button>
-                <button class="category-btn px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest" data-category="miscellaneous">Miscellaneous</button>
+        
+        <!-- Header Replacement Area -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
+            <!-- Buttons replace "Library" text -->
+            <div id="category-filters" class="flex flex-wrap gap-3">
+                <button class="category-btn active px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="all">All</button>
+                <button class="category-btn px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="applications">Applications</button>
+                <button class="category-btn px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="games">Games</button>
+                <button class="category-btn px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest" data-category="miscellaneous">Miscellaneous</button>
             </div>
 
-            <!-- Search Input -->
-            <div class="relative w-full md:w-80">
-                <input type="text" id="search-input" placeholder="Search items..." class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all">
+            <!-- Search Bar -->
+            <div class="relative w-full lg:w-96">
+                <input type="text" id="search-input" placeholder="Search library..." class="bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-blue-500 text-white w-full transition-all placeholder-slate-500">
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
             </div>
         </div>
+
+        <p id="status-text" class="hidden text-center mb-8 text-blue-400 font-bold tracking-widest text-xs uppercase">🛠️ EDIT MODE: ON</p>
 
         <!-- Content Grid -->
         <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
@@ -131,7 +131,7 @@
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500">No items found matching your filters.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 font-medium">No results found for this category.</div>';
                 return;
             }
 
@@ -146,8 +146,8 @@
                     </div>
                     <div class="text-4xl mb-6">${item.icon || '📦'}</div>
                     <h3 class="text-xl font-bold text-white leading-tight">${item.name}</h3>
-                    <div class="mt-2 flex items-center gap-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">${item.category || 'general'}</span>
+                    <div class="mt-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md">${item.category || 'general'}</span>
                     </div>
                     <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-700/50">
                         <span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">${item.size || 'N/A'}</span>
@@ -157,7 +157,7 @@
             });
         }
 
-        // Category Selection
+        // Category Filter Logic
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -167,40 +167,34 @@
             };
         });
 
-        // Admin Edit Toggle
+        // Admin Toggles
         document.getElementById('admin-edit-toggle').onclick = () => {
             editMode = !editMode;
-            statusText.textContent = editMode ? "🛠️ EDIT MODE: ON" : "Browse our library of software.";
+            statusText.classList.toggle('hidden', !editMode);
             renderItems();
         };
 
-        // Admin Add Item
         document.getElementById('admin-add-item').onclick = async () => {
-            const name = prompt("Item Name:");
+            const name = prompt("Name:");
             const category = prompt("Category (applications/games/miscellaneous):", "applications");
-            const url = prompt("Download URL:");
-            const size = prompt("Size (e.g. 15MB):", "N/A");
+            const url = prompt("URL:");
+            const size = prompt("Size:", "N/A");
             
-            if (!name || !category || !url) {
-                alert("Missing required fields.");
-                return;
-            }
+            if (!name || !category || !url) return;
 
             const { error } = await sbClient.from('downloads').insert([{ 
                 name, category: category.toLowerCase(), url, size, icon: '📦' 
             }]);
-            
             if (error) alert(error.message); else fetchData();
         };
 
-        // Admin Delete Item
         window.deleteItem = async (id) => {
-            if (!confirm("Delete this item permanently?")) return;
-            const { error } = await sbClient.from('downloads').delete().eq('id', id);
-            if (error) alert(error.message); else fetchData();
+            if (confirm("Delete?")) {
+                await sbClient.from('downloads').delete().eq('id', id);
+                fetchData();
+            }
         };
 
-        // Logout
         document.getElementById('logout-btn').onclick = async () => {
             await sbClient.auth.signOut();
             sessionStorage.removeItem('sdh_guest');
