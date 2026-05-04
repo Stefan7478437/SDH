@@ -10,59 +10,85 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .auth-card { transition: all 0.3s ease; }
-        .view-transition { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .hidden-element { display: none; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: radial-gradient(circle at top right, #f0f2f5, #e5e7eb); 
+        }
+        
+        /* The "Pop-up" Animation */
+        .auth-container {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hidden-section {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s ease-in-out;
+        }
+
+        .show-section {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 1rem;
+        }
+
+        /* Input styling */
+        input:focus {
+            transform: scale(1.01);
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md auth-card view-transition">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent inline-block">SDH</h1>
-            <p id="view-subtitle" class="text-gray-500 font-medium">Sign in to your account</p>
+    <div id="auth-card" class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md auth-container">
+        <div class="text-center mb-6">
+            <h1 class="text-5xl font-black mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent inline-block">SDH</h1>
+            <p id="view-subtitle" class="text-gray-400 font-medium transition-all duration-300">Sign in to your account</p>
         </div>
 
         <div class="space-y-4">
-            <!-- Email (Shared) -->
+            <!-- Email (Always Visible) -->
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
-                <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Email Address</label>
+                <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
             </div>
 
-            <!-- Password (Shared) -->
+            <!-- Password (Always Visible) -->
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Password</label>
+                <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
             </div>
 
-            <!-- Repeat Password (Register Mode Only) -->
-            <div id="repeat-password-area" class="hidden-element">
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Repeat Password</label>
-                <input type="password" id="repeat-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
+            <!-- REPEAT PASSWORD (The Pop-up section) -->
+            <div id="repeat-password-section" class="hidden-section">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Repeat Password</label>
+                <input type="password" id="repeat-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none bg-gray-50" />
             </div>
 
-            <!-- Error Feedback -->
-            <div id="error-box" class="hidden-element p-3 rounded-lg text-center text-sm font-medium"></div>
+            <!-- Error Feedback Box -->
+            <div id="error-box" class="hidden-section overflow-hidden">
+                <div id="error-content" class="p-3 rounded-xl text-center text-sm font-semibold"></div>
+            </div>
 
-            <button id="action-btn" class="w-full px-6 py-3 font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.01] shadow-md">
+            <!-- Action Button -->
+            <button id="action-btn" class="w-full mt-2 px-6 py-4 font-bold rounded-2xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all transform active:scale-95 shadow-lg shadow-blue-200">
                 Login
             </button>
 
-            <div class="text-center mt-4">
-                <button id="toggle-view-btn" class="text-sm text-gray-600 hover:text-blue-500 font-medium transition-colors">
-                    Don't have an account? <span class="text-blue-600 font-bold">Sign Up</span>
+            <!-- Toggle Switch -->
+            <div class="text-center pt-2">
+                <button id="toggle-view-btn" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                    Don't have an account? <span class="font-bold underline">Sign Up</span>
                 </button>
             </div>
             
-            <div id="guest-divider" class="relative py-4">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Or</span></div>
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-300 font-bold">Or</span></div>
             </div>
 
-            <button id="guest-btn" class="w-full py-2 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">Continue Anonymously</button>
+            <button id="guest-btn" class="w-full py-2 text-gray-400 hover:text-gray-600 text-xs font-bold tracking-widest uppercase transition-colors">Continue Anonymously</button>
         </div>
     </div>
 
@@ -74,46 +100,50 @@
         const emailInput = document.getElementById('email');
         const passInput = document.getElementById('password');
         const repeatInput = document.getElementById('repeat-password');
-        const repeatArea = document.getElementById('repeat-password-area');
+        const repeatSection = document.getElementById('repeat-password-section');
         const errorBox = document.getElementById('error-box');
+        const errorContent = document.getElementById('error-content');
         const actionBtn = document.getElementById('action-btn');
         const toggleBtn = document.getElementById('toggle-view-btn');
         const subtitle = document.getElementById('view-subtitle');
 
         let isLoginMode = true;
 
-        function showMessage(msg, isWarning = false) {
-            errorBox.textContent = msg;
-            errorBox.classList.remove('hidden-element');
-            errorBox.className = isWarning 
-                ? "p-3 rounded-lg text-center text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200"
-                : "p-3 rounded-lg text-center text-sm font-medium bg-red-50 text-red-700 border border-red-200";
+        function showError(msg, type = 'danger') {
+            errorContent.textContent = msg;
+            errorBox.classList.add('show-section');
+            
+            if (type === 'warning') {
+                errorContent.className = "p-3 rounded-xl text-center text-sm font-semibold bg-orange-50 text-orange-600 border border-orange-100";
+            } else {
+                errorContent.className = "p-3 rounded-xl text-center text-sm font-semibold bg-red-50 text-red-600 border border-red-100";
+            }
         }
 
-        function switchMode(toLogin) {
-            isLoginMode = toLogin;
-            errorBox.classList.add('hidden-element');
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            errorBox.classList.remove('show-section');
             
             if (isLoginMode) {
                 subtitle.textContent = "Sign in to your account";
                 actionBtn.textContent = "Login";
-                toggleBtn.innerHTML = 'Don\'t have an account? <span class="text-blue-600 font-bold">Sign Up</span>';
-                repeatArea.classList.add('hidden-element');
+                toggleBtn.innerHTML = 'Don\'t have an account? <span class="font-bold underline">Sign Up</span>';
+                repeatSection.classList.remove('show-section');
             } else {
                 subtitle.textContent = "Create your account";
-                actionBtn.textContent = "Register";
-                toggleBtn.innerHTML = 'Already have an account? <span class="text-blue-600 font-bold">Log In</span>';
-                repeatArea.classList.remove('hidden-element');
+                actionBtn.textContent = "Register Now";
+                toggleBtn.innerHTML = 'Already have an account? <span class="font-bold underline">Log In</span>';
+                repeatSection.classList.add('show-section');
             }
         }
 
-        async function performAuth() {
+        async function handleAuth() {
             const email = emailInput.value;
             const password = passInput.value;
-            errorBox.classList.add('hidden-element');
+            errorBox.classList.remove('show-section');
 
             if (!email || !password) {
-                showMessage("Email and password are required.");
+                showError("Please fill in your credentials.");
                 return;
             }
 
@@ -123,49 +153,44 @@
                 if (error) {
                     const msg = error.message.toLowerCase();
                     if (msg.includes("invalid login credentials")) {
-                        // Check if it's likely a wrong password or just not found
-                        // Note: Supabase often returns generic "Invalid login credentials" for security
-                        showMessage("Incorrect password. Please try again.", true);
-                    } else if (msg.includes("email not confirmed") || error.status === 400) {
-                        showMessage("Account not found. Switch to 'Sign Up' to register this email.", true);
+                        // User exists but wrong password OR user doesn't exist
+                        // We check if the account is likely missing
+                        showError("Incorrect password or account not found. Click 'Sign Up' if you're new!", "warning");
                     } else {
-                        showMessage(error.message);
+                        showError(error.message);
                     }
                 } else {
                     window.location.href = 'index.html';
                 }
             } else {
-                const repeatPassword = repeatInput.value;
-                if (password !== repeatPassword) {
-                    showMessage("Passwords do not match.");
+                const repeatPass = repeatInput.value;
+                if (password !== repeatPass) {
+                    showError("Passwords do not match!");
                     return;
                 }
 
                 const { error } = await sbClient.auth.signUp({ email, password });
                 if (error) {
-                    showMessage(error.message);
+                    showError(error.message);
                 } else {
-                    alert("Success! Check your email for a confirmation link.");
-                    switchMode(true);
+                    alert("Account created! Check your email for confirmation.");
+                    toggleMode(); // Switch back to login
                 }
             }
         }
 
-        actionBtn.onclick = performAuth;
-        toggleBtn.onclick = () => switchMode(!isLoginMode);
+        actionBtn.onclick = handleAuth;
+        toggleBtn.onclick = toggleMode;
         
         document.getElementById('guest-btn').onclick = () => {
             sessionStorage.setItem('sdh_guest', 'true');
             window.location.href = 'index.html';
         };
 
-        // Trigger action on Enter key
-        [emailInput, passInput, repeatInput].forEach(el => {
-            el.addEventListener('keypress', (e) => { if (e.key === 'Enter') performAuth(); });
+        // Enter key support
+        window.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAuth();
         });
-
-        // Start in Login Mode
-        switchMode(true);
     </script>
 </body>
 </html>
