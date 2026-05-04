@@ -8,15 +8,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CRITICAL: Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f9fafb; margin: 0; }
         .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(229, 231, 235, 0.5); }
-        .category-btn { transition: all 0.2s ease; background: white; color: #6b7280; }
-        .category-btn.active { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .category-btn { transition: all 0.2s ease; background: white; color: #6b7280; border: 1px solid #e5e7eb; }
+        .category-btn.active { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
         .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
-        .admin-feature { display: none; } /* Hidden by default */
+        .admin-feature { display: none; } 
         .edit-active .edit-badge { display: flex; }
     </style>
 </head>
@@ -38,21 +39,21 @@
                     <div class="bg-white border border-gray-100 rounded-2xl shadow-xl p-2 ring-1 ring-black ring-opacity-5">
                         <button id="admin-edit-toggle" class="admin-feature w-full text-left px-4 py-2.5 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-2 mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Toggle Edit Mode
                         </button>
 
                         <button id="admin-add-item" class="admin-feature w-full text-left px-4 py-2.5 text-sm font-bold text-green-600 hover:bg-green-50 rounded-xl transition-colors flex items-center gap-2 mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path d="M12 4v16m8-8H4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Add New Item
                         </button>
 
                         <hr class="admin-feature my-1 border-gray-100">
 
-                        <button id="logout-btn" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-2">
+                        <button id="logout-btn" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                             Logout
                         </button>
                     </div>
@@ -68,13 +69,15 @@
         </div>
 
         <div class="flex flex-wrap gap-3 mb-10" id="category-filters">
-            <button data-cat="all" class="category-btn active px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-200">All</button>
-            <button data-cat="applications" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-200">Applications</button>
-            <button data-cat="games" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-200">Games</button>
-            <button data-cat="miscellaneous" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-200">Miscellaneous</button>
+            <button data-cat="all" class="category-btn active px-6 py-2.5 rounded-xl text-sm font-bold">All</button>
+            <button data-cat="applications" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Applications</button>
+            <button data-cat="games" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Games</button>
+            <button data-cat="miscellaneous" class="category-btn px-6 py-2.5 rounded-xl text-sm font-bold">Miscellaneous</button>
         </div>
 
-        <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Items load here -->
+        </div>
     </main>
 
     <script>
@@ -94,17 +97,20 @@
             const { data: { session } } = await sbClient.auth.getSession();
             const isGuest = sessionStorage.getItem('sdh_guest') === 'true';
 
-            if (!session && !isGuest) { window.location.href = 'auth.html'; return; }
+            if (!session && !isGuest) { 
+                window.location.href = 'auth.html'; 
+                return; 
+            }
 
             if (session) {
                 userDisplay.textContent = session.user.email;
                 
                 // Fetch user role from profiles table
-                const { data: profile } = await sbClient
+                const { data: profile, error } = await sbClient
                     .from('profiles')
                     .select('role')
                     .eq('id', session.user.id)
-                    .single();
+                    .maybeSingle(); // maybeSingle prevents errors if profile is missing
 
                 if (profile && profile.role === 'admin') {
                     adminElements.forEach(el => el.style.display = 'flex');
@@ -114,8 +120,15 @@
         }
 
         async function fetchData() {
-            const { data, error } = await sbClient.from('downloads').select('*').order('created_at', { ascending: false });
-            if (!error) { currentData = data; renderItems(); }
+            const { data, error } = await sbClient
+                .from('downloads')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (!error) { 
+                currentData = data; 
+                renderItems(); 
+            }
         }
 
         function renderItems(filter = 'all') {
@@ -144,6 +157,7 @@
             });
         }
 
+        // Toggle Edit Mode Logic
         document.getElementById('admin-edit-toggle').onclick = () => {
             editMode = !editMode;
             statusText.textContent = editMode ? "🛠️ ADMIN EDIT MODE ACTIVE" : "Browse our library of software and tools.";
@@ -151,24 +165,38 @@
             renderItems();
         };
 
+        // Edit function
         window.editItem = async (id) => {
             const item = currentData.find(i => i.id === id);
             const newName = prompt("Edit Name:", item.name);
             if (newName === null) return;
             const newUrl = prompt("Edit URL:", item.url);
-            const { error } = await sbClient.from('downloads').update({ name: newName, url: newUrl }).eq('id', id);
-            if (error) alert(error.message); else fetchData();
+
+            const { error } = await sbClient
+                .from('downloads')
+                .update({ name: newName, url: newUrl })
+                .eq('id', id);
+            
+            if (error) alert(error.message);
+            else fetchData();
         };
 
+        // Add New Item function
         document.getElementById('admin-add-item').onclick = async () => {
             const name = prompt("Item Name:");
             if (!name) return;
             const category = prompt("Category (applications, games, miscellaneous):", "applications");
             const url = prompt("Download URL:");
-            const { error } = await sbClient.from('downloads').insert([{ name, category, url, icon: '📦', size: 'N/A' }]);
-            if (error) alert(error.message); else fetchData();
+
+            const { error } = await sbClient
+                .from('downloads')
+                .insert([{ name, category, url, icon: '📦', size: 'N/A' }]);
+            
+            if (error) alert(error.message);
+            else fetchData();
         };
 
+        // Filter functionality
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -183,6 +211,7 @@
             window.location.href = 'auth.html';
         };
 
+        // Start the app
         checkSession();
     </script>
 </body>
