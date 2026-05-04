@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SDH</title>
+    <title>SDH - Authentication</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,38 +11,48 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .auth-card { transform: translateY(0); transition: all 0.3s ease; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md auth-card">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-800 mb-2 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent inline-block font-bold">SDH</h1>
-            <p class="text-gray-500">Sign in to access your downloads</p>
+            <h1 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent inline-block">SDH</h1>
+            <p id="auth-subtitle" class="text-gray-500">Sign in to your account</p>
         </div>
 
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
                 <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
                 <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
 
-            <p id="error-msg" class="text-red-500 text-sm hidden bg-red-50 p-2 rounded-lg text-center"></p>
+            <p id="error-msg" class="text-red-500 text-sm hidden bg-red-50 p-3 rounded-lg text-center font-medium"></p>
 
-            <button id="login-btn" class="w-full px-6 py-3 font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.02] shadow-md">Login</button>
-            <button id="signup-btn" class="w-full px-6 py-3 font-semibold rounded-xl text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all">Create Account</button>
+            <!-- Main Action Button -->
+            <button id="submit-btn" class="w-full px-6 py-3 font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.01] shadow-md">
+                Login
+            </button>
+
+            <!-- Toggle between Login and Sign Up -->
+            <div class="text-center mt-4">
+                <button id="toggle-mode-btn" class="text-sm text-gray-600 hover:text-blue-500 font-medium">
+                    Don't have an account? <span class="text-blue-600 font-bold">Sign Up</span>
+                </button>
+            </div>
             
             <div class="relative py-4">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
                 <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400">Or</span></div>
             </div>
 
-            <button id="guest-btn" class="w-full text-blue-500 hover:underline text-sm font-medium">Continue as Guest (Read-Only)</button>
+            <button id="guest-btn" class="w-full py-2 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">Continue Anonymously</button>
         </div>
     </div>
 
@@ -54,43 +64,79 @@
         const emailInput = document.getElementById('email');
         const passInput = document.getElementById('password');
         const errorEl = document.getElementById('error-msg');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleBtn = document.getElementById('toggle-mode-btn');
+        const subtitle = document.getElementById('auth-subtitle');
 
-        // If already logged in, skip this page
+        let isLoginMode = true;
+
+        // Check if user is already logged in
         async function checkSession() {
             const { data } = await sbClient.auth.getSession();
-            if (data.session || sessionStorage.getItem('sdh_guest') === 'true') {
-                window.location.href = 'index.html';
-            }
+            if (data.session) window.location.href = 'index.html';
         }
         checkSession();
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
+                subtitle.textContent = "Sign in to your account";
+                submitBtn.textContent = "Login";
+                toggleBtn.innerHTML = 'Don\'t have an account? <span class="text-blue-600 font-bold">Sign Up</span>';
+            } else {
+                subtitle.textContent = "Create a new account";
+                submitBtn.textContent = "Create Account";
+                toggleBtn.innerHTML = 'Already have an account? <span class="text-blue-600 font-bold">Log In</span>';
+            }
+            errorEl.classList.add('hidden');
+        }
+
+        async function handleAuth() {
+            const email = emailInput.value;
+            const password = passInput.value;
+            errorEl.classList.add('hidden');
+
+            if (!email || !password) {
+                showError("Please fill in all fields.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = isLoginMode ? "Logging in..." : "Creating account...";
+
+            if (isLoginMode) {
+                const { error } = await sbClient.auth.signInWithPassword({ email, password });
+                if (error) showError(error.message);
+                else window.location.href = 'index.html';
+            } else {
+                const { error } = await sbClient.auth.signUp({ email, password });
+                if (error) showError(error.message);
+                else {
+                    alert("Account created! If email confirmation is enabled, please check your inbox before logging in.");
+                    toggleMode();
+                }
+            }
+            submitBtn.disabled = false;
+        }
 
         function showError(msg) {
             errorEl.textContent = msg;
             errorEl.classList.remove('hidden');
+            submitBtn.textContent = isLoginMode ? "Login" : "Create Account";
         }
 
-        document.getElementById('login-btn').onclick = async () => {
-            const { error } = await sbClient.auth.signInWithPassword({ 
-                email: emailInput.value, 
-                password: passInput.value 
-            });
-            if (error) showError(error.message);
-            else window.location.href = 'index.html';
-        };
-
-        document.getElementById('signup-btn').onclick = async () => {
-            const { error } = await sbClient.auth.signUp({ 
-                email: emailInput.value, 
-                password: passInput.value 
-            });
-            if (error) showError(error.message);
-            else alert("Account created! Check your email for a verification link.");
-        };
-
+        submitBtn.onclick = handleAuth;
+        toggleBtn.onclick = toggleMode;
+        
         document.getElementById('guest-btn').onclick = () => {
             sessionStorage.setItem('sdh_guest', 'true');
             window.location.href = 'index.html';
         };
+
+        // Allow Enter key to submit
+        window.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAuth();
+        });
     </script>
 </body>
 </html>
