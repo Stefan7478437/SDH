@@ -16,11 +16,15 @@
         .btn-gradient { background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; transition: all 0.3s ease; border: none; display: flex; align-items: center; justify-content: center; }
         .btn-gradient:hover { filter: brightness(1.2); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); }
         
+        /* Category Buttons Style */
+        .category-btn { transition: all 0.2s ease; background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+        .category-btn:hover { background: #334155; color: white; }
+        .category-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important; color: white !important; border-color: transparent !important; }
+
         .card-custom { background-color: #1e293b; border: 1px solid #334155; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-custom:hover { transform: translateY(-6px); border-color: #475569; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
         
         .dropdown-menu-container { top: 100%; right: 0; min-width: 100%; }
-        
         .admin-actions { display: none; }
         .edit-active .admin-actions { display: flex; }
     </style>
@@ -42,17 +46,11 @@
                 <div class="absolute dropdown-menu-container hidden group-hover:block z-50">
                     <div class="theme-bg-match border-x border-b border-slate-700 rounded-b-2xl shadow-2xl p-2 flex flex-col gap-1">
                         <div id="admin-controls" class="hidden flex-col gap-1">
-                            <button id="admin-edit-toggle" class="w-full text-left px-4 py-2.5 text-sm font-bold text-blue-400 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-2">
-                                Toggle Edit Mode
-                            </button>
-                            <button id="admin-add-item" class="w-full text-left px-4 py-2.5 text-sm font-bold text-green-400 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-2">
-                                New Item
-                            </button>
+                            <button id="admin-edit-toggle" class="w-full text-left px-4 py-2.5 text-sm font-bold text-blue-400 hover:bg-slate-800 rounded-xl transition-colors">Toggle Edit Mode</button>
+                            <button id="admin-add-item" class="w-full text-left px-4 py-2.5 text-sm font-bold text-green-400 hover:bg-slate-800 rounded-xl transition-colors">New Item</button>
                             <hr class="border-slate-700 my-1">
                         </div>
-                        <button id="logout-btn" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-400 hover:bg-slate-800 rounded-xl transition-colors">
-                            Logout
-                        </button>
+                        <button id="logout-btn" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-400 hover:bg-slate-800 rounded-xl transition-colors">Logout</button>
                     </div>
                 </div>
             </div>
@@ -65,7 +63,17 @@
                 <h2 class="text-4xl font-extrabold text-white tracking-tight">Library</h2>
                 <p id="status-text" class="text-slate-400 mt-2 font-medium">Browse our library of software.</p>
             </div>
-            <input type="text" id="search-input" placeholder="Search items..." class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none text-white w-full md:w-72">
+            <div class="flex flex-col gap-4 w-full md:w-auto">
+                <input type="text" id="search-input" placeholder="Search items..." class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none text-white w-full md:w-72">
+                
+                <!-- Category Buttons Re-added -->
+                <div class="flex flex-wrap gap-2">
+                    <button class="category-btn active px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" data-category="all">All</button>
+                    <button class="category-btn px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" data-category="applications">Applications</button>
+                    <button class="category-btn px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" data-category="games">Games</button>
+                    <button class="category-btn px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" data-category="miscellaneous">Miscellaneous</button>
+                </div>
+            </div>
         </div>
 
         <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
@@ -81,9 +89,10 @@
         const statusText = document.getElementById('status-text');
         const searchInput = document.getElementById('search-input');
         const adminControls = document.getElementById('admin-controls');
-
+        
         let currentData = [];
         let editMode = false;
+        let selectedCategory = 'all';
 
         async function checkSession() {
             const { data: { session } } = await sbClient.auth.getSession();
@@ -98,9 +107,7 @@
                     adminControls.classList.remove('hidden');
                     adminControls.classList.add('flex');
                 }
-            } else {
-                userDisplay.textContent = "Guest Mode";
-            }
+            } else { userDisplay.textContent = "Guest Mode"; }
             fetchData();
         }
 
@@ -112,12 +119,19 @@
         function renderItems() {
             const searchTerm = searchInput.value.toLowerCase();
             grid.innerHTML = '';
-            currentData.filter(i => i.name.toLowerCase().includes(searchTerm)).forEach(item => {
+
+            const filtered = currentData.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+                const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            filtered.forEach(item => {
                 const card = document.createElement('div');
                 card.className = `card-custom rounded-[2.5rem] p-8 relative overflow-hidden ${editMode ? 'edit-active' : ''}`;
                 card.innerHTML = `
                     <div class="admin-actions absolute top-4 right-4 gap-2 z-10">
-                        <button onclick="deleteItem('${item.id}')" class="bg-red-500 text-white p-2 rounded-full hover:scale-110 transition-transform shadow-lg">
+                        <button onclick="deleteItem('${item.id}')" class="bg-red-500 text-white p-2 rounded-full hover:scale-110 shadow-lg">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
@@ -132,6 +146,16 @@
             });
         }
 
+        // Category Filter Logic
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedCategory = btn.getAttribute('data-category');
+                renderItems();
+            };
+        });
+
         document.getElementById('admin-edit-toggle').onclick = () => {
             editMode = !editMode;
             statusText.textContent = editMode ? "🛠️ EDIT MODE: ON" : "Browse our library of software.";
@@ -139,39 +163,23 @@
         };
 
         document.getElementById('admin-add-item').onclick = async () => {
-            const name = prompt("Item Name (e.g. Photoshop):");
-            if (!name) return;
-            
-            const category = prompt("Category (REQUIRED - e.g. software, games, scripts):");
-            if (!category) {
-                alert("Category is required by the database!");
-                return;
-            }
-
+            const name = prompt("Item Name:");
+            const category = prompt("Category (applications/games/miscellaneous):", "applications");
             const url = prompt("Download URL:");
-            if (!url) return;
-
-            const size = prompt("Size (e.g. 1.2GB):", "N/A");
+            const size = prompt("Size (e.g. 10MB):", "N/A");
             
-            const { error } = await sbClient.from('downloads').insert([{ 
-                name, 
-                category: category.toLowerCase(), 
-                url, 
-                size, 
-                icon: '📦' 
-            }]);
+            if (!name || !category || !url) return;
 
-            if (error) {
-                alert("Database Error: " + error.message);
-            } else {
-                fetchData();
-            }
+            const { error } = await sbClient.from('downloads').insert([{ 
+                name, category: category.toLowerCase(), url, size, icon: '📦' 
+            }]);
+            if (error) alert(error.message); else fetchData();
         };
 
         window.deleteItem = async (id) => {
-            if (!confirm("Delete permanently?")) return;
+            if (!confirm("Delete?")) return;
             const { error } = await sbClient.from('downloads').delete().eq('id', id);
-            if (error) alert(error.message); else fetchData();
+            if (!error) fetchData();
         };
 
         document.getElementById('logout-btn').onclick = async () => {
