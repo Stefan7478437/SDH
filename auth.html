@@ -12,48 +12,47 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
         .auth-card { transition: all 0.3s ease; }
-        .hidden-view { display: none; }
+        .view-transition { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden-element { display: none; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md auth-card">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md auth-card view-transition">
         <div class="text-center mb-8">
             <h1 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent inline-block">SDH</h1>
-            <p id="view-title" class="text-gray-500 font-medium">Sign in to your account</p>
+            <p id="view-subtitle" class="text-gray-500 font-medium">Sign in to your account</p>
         </div>
 
         <div class="space-y-4">
-            <!-- Email Input (Shared) -->
+            <!-- Email (Shared) -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
                 <input type="email" id="email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
 
-            <!-- Password Input (Shared) -->
+            <!-- Password (Shared) -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
                 <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
 
-            <!-- Repeat Password (Sign Up Only) -->
-            <div id="repeat-password-container" class="hidden-view">
+            <!-- Repeat Password (Register Mode Only) -->
+            <div id="repeat-password-area" class="hidden-element">
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Repeat Password</label>
                 <input type="password" id="repeat-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
             </div>
 
-            <!-- Error Messages -->
-            <div id="error-container" class="hidden-view p-3 rounded-lg text-center text-sm font-medium">
-                <p id="error-text"></p>
-            </div>
+            <!-- Error Feedback -->
+            <div id="error-box" class="hidden-element p-3 rounded-lg text-center text-sm font-medium"></div>
 
-            <!-- Action Buttons -->
-            <button id="main-action-btn" class="w-full px-6 py-3 font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.01] shadow-md">
+            <button id="action-btn" class="w-full px-6 py-3 font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all transform hover:scale-[1.01] shadow-md">
                 Login
             </button>
 
             <div class="text-center mt-4">
-                <button id="switch-view-btn" class="text-sm text-gray-600 hover:text-blue-500 font-medium">
+                <button id="toggle-view-btn" class="text-sm text-gray-600 hover:text-blue-500 font-medium transition-colors">
                     Don't have an account? <span class="text-blue-600 font-bold">Sign Up</span>
                 </button>
             </div>
@@ -72,104 +71,101 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_S-IH7rZQwgSvGncHvbNkiA_ETrg-hWY';
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Elements
         const emailInput = document.getElementById('email');
         const passInput = document.getElementById('password');
-        const repeatPassInput = document.getElementById('repeat-password');
-        const repeatContainer = document.getElementById('repeat-password-container');
-        const errorContainer = document.getElementById('error-container');
-        const errorText = document.getElementById('error-text');
-        const actionBtn = document.getElementById('main-action-btn');
-        const switchBtn = document.getElementById('switch-view-btn');
-        const viewTitle = document.getElementById('view-title');
+        const repeatInput = document.getElementById('repeat-password');
+        const repeatArea = document.getElementById('repeat-password-area');
+        const errorBox = document.getElementById('error-box');
+        const actionBtn = document.getElementById('action-btn');
+        const toggleBtn = document.getElementById('toggle-view-btn');
+        const subtitle = document.getElementById('view-subtitle');
 
-        let isLoginView = true;
+        let isLoginMode = true;
 
-        // View Switching Logic
-        function setView(toLogin) {
-            isLoginView = toLogin;
-            errorContainer.classList.add('hidden-view');
+        function showMessage(msg, isWarning = false) {
+            errorBox.textContent = msg;
+            errorBox.classList.remove('hidden-element');
+            errorBox.className = isWarning 
+                ? "p-3 rounded-lg text-center text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200"
+                : "p-3 rounded-lg text-center text-sm font-medium bg-red-50 text-red-700 border border-red-200";
+        }
+
+        function switchMode(toLogin) {
+            isLoginMode = toLogin;
+            errorBox.classList.add('hidden-element');
             
-            if (isLoginView) {
-                viewTitle.textContent = "Sign in to your account";
+            if (isLoginMode) {
+                subtitle.textContent = "Sign in to your account";
                 actionBtn.textContent = "Login";
-                switchBtn.innerHTML = 'Don\'t have an account? <span class="text-blue-600 font-bold">Sign Up</span>';
-                repeatContainer.classList.add('hidden-view');
+                toggleBtn.innerHTML = 'Don\'t have an account? <span class="text-blue-600 font-bold">Sign Up</span>';
+                repeatArea.classList.add('hidden-element');
             } else {
-                viewTitle.textContent = "Create your account";
+                subtitle.textContent = "Create your account";
                 actionBtn.textContent = "Register";
-                switchBtn.innerHTML = 'Already have an account? <span class="text-blue-600 font-bold">Log In</span>';
-                repeatContainer.classList.remove('hidden-view');
+                toggleBtn.innerHTML = 'Already have an account? <span class="text-blue-600 font-bold">Log In</span>';
+                repeatArea.classList.remove('hidden-element');
             }
         }
 
-        function displayError(message, type = 'error') {
-            errorContainer.classList.remove('hidden-view');
-            errorText.textContent = message;
-            
-            if (type === 'auth-fail') {
-                // Style for specific auth errors (e.g., Wrong password)
-                errorContainer.className = "p-3 rounded-lg text-center text-sm font-medium bg-orange-50 text-orange-700 border border-orange-200";
-            } else {
-                // Standard red error
-                errorContainer.className = "p-3 rounded-lg text-center text-sm font-medium bg-red-50 text-red-700 border border-red-200";
-            }
-        }
-
-        // Authentication Logic
-        async function handleAuth() {
+        async function performAuth() {
             const email = emailInput.value;
             const password = passInput.value;
-            
+            errorBox.classList.add('hidden-element');
+
             if (!email || !password) {
-                displayError("Please enter both email and password.");
+                showMessage("Email and password are required.");
                 return;
             }
 
-            if (isLoginView) {
-                const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+            if (isLoginMode) {
+                const { error } = await sbClient.auth.signInWithPassword({ email, password });
                 
                 if (error) {
-                    // Logic for different error types
-                    if (error.message.toLowerCase().includes("invalid login credentials")) {
-                        displayError("Wrong password. Please try again.", 'auth-fail');
-                    } else if (error.message.toLowerCase().includes("email not confirmed") || error.status === 400) {
-                        displayError("This email is not registered. Would you like to create an account?", 'auth-fail');
+                    const msg = error.message.toLowerCase();
+                    if (msg.includes("invalid login credentials")) {
+                        // Check if it's likely a wrong password or just not found
+                        // Note: Supabase often returns generic "Invalid login credentials" for security
+                        showMessage("Incorrect password. Please try again.", true);
+                    } else if (msg.includes("email not confirmed") || error.status === 400) {
+                        showMessage("Account not found. Switch to 'Sign Up' to register this email.", true);
                     } else {
-                        displayError(error.message);
+                        showMessage(error.message);
                     }
                 } else {
                     window.location.href = 'index.html';
                 }
             } else {
-                // Registration Logic
-                const repeatPassword = repeatPassInput.value;
+                const repeatPassword = repeatInput.value;
                 if (password !== repeatPassword) {
-                    displayError("Passwords do not match.");
+                    showMessage("Passwords do not match.");
                     return;
                 }
 
                 const { error } = await sbClient.auth.signUp({ email, password });
                 if (error) {
-                    displayError(error.message);
+                    showMessage(error.message);
                 } else {
-                    alert("Registration successful! Check your email if confirmation is required.");
-                    setView(true);
+                    alert("Success! Check your email for a confirmation link.");
+                    switchMode(true);
                 }
             }
         }
 
-        // Event Listeners
-        actionBtn.onclick = handleAuth;
-        switchBtn.onclick = () => setView(!isLoginView);
+        actionBtn.onclick = performAuth;
+        toggleBtn.onclick = () => switchMode(!isLoginMode);
         
         document.getElementById('guest-btn').onclick = () => {
             sessionStorage.setItem('sdh_guest', 'true');
             window.location.href = 'index.html';
         };
 
-        // Initialize view
-        setView(true);
+        // Trigger action on Enter key
+        [emailInput, passInput, repeatInput].forEach(el => {
+            el.addEventListener('keypress', (e) => { if (e.key === 'Enter') performAuth(); });
+        });
+
+        // Start in Login Mode
+        switchMode(true);
     </script>
 </body>
 </html>
