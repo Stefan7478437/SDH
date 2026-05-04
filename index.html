@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Site Background */
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #0f172a; 
@@ -17,12 +18,13 @@
             color: #f1f5f9;
         }
         
-        /* Consistent Header & Card Background Color */
-        .header-defined, .card-custom, .dropdown-menu-bg { 
-            background: #1e293b; 
+        /* Unified Header & Card & Dropdown Color: #1e293b */
+        .theme-bg-match { 
+            background-color: #1e293b !important; 
         }
 
-        .header-defined {
+        .header-defined { 
+            background-color: #1e293b;
             border-bottom: 1px solid #334155;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
@@ -48,26 +50,22 @@
             color: #94a3b8; 
             border: 1px solid #334155; 
         }
-        .category-btn:hover {
-            border-color: #475569;
-            color: #f1f5f9;
-        }
         .category-btn.active { 
             background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important; 
             color: white !important; 
             border-color: transparent !important;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); 
         }
         
-        /* Dark Card Styling */
+        /* Card Styling to match Header */
         .card-custom { 
+            background-color: #1e293b; 
             border: 1px solid #334155; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .card-custom:hover { 
             transform: translateY(-6px); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
             border-color: #475569;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
         .dropdown-container::after {
@@ -103,25 +101,22 @@
                     </svg>
                 </div>
 
-                <!-- Dropdown Menu updated to match Header Color -->
+                <!-- Dropdown Menu matching Header Color -->
                 <div class="absolute right-0 mt-2 w-52 hidden group-hover:block z-50">
-                    <div class="dropdown-menu-bg border border-slate-700 rounded-2xl shadow-2xl p-2 ring-1 ring-black ring-opacity-5">
+                    <div class="theme-bg-match border border-slate-700 rounded-2xl shadow-2xl p-2 ring-1 ring-black ring-opacity-5">
                         <button id="admin-edit-toggle" class="admin-feature w-full text-left px-4 py-2.5 text-sm font-bold text-blue-400 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-2 mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Toggle Edit Mode
                         </button>
-
                         <button id="admin-add-item" class="admin-feature w-full text-left px-4 py-2.5 text-sm font-bold text-green-400 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-2 mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Add New Item
                         </button>
-
                         <hr class="admin-feature my-1 border-slate-700">
-
                         <button id="logout-btn" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-400 hover:bg-slate-800 rounded-xl transition-colors">
                             Logout
                         </button>
@@ -193,7 +188,7 @@
                     <div>
                         <div class="text-4xl mb-6">${item.icon || '📦'}</div>
                         <h3 class="text-xl font-bold text-white leading-tight">${item.name}</h3>
-                        <span class="inline-block mt-3 px-3 py-1 bg-slate-700/50 text-blue-300 text-[10px] font-black uppercase tracking-widest rounded-lg">${item.category}</span>
+                        <span class="inline-block mt-3 px-3 py-1 bg-slate-900/40 text-blue-300 text-[10px] font-black uppercase tracking-widest rounded-lg">${item.category}</span>
                     </div>
                     <div class="flex justify-between items-center mt-10 pt-6 border-t border-slate-700/50">
                         <span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">${item.size || 'N/A'}</span>
@@ -223,7 +218,7 @@
         document.getElementById('admin-add-item').onclick = async () => {
             const name = prompt("Item Name:");
             if (!name) return;
-            const category = prompt("Category (applications, games, miscellaneous):", "applications");
+            const category = prompt("Category:", "applications");
             const url = prompt("Download URL:");
             const { error } = await sbClient.from('downloads').insert([{ name, category, url, icon: '📦', size: 'N/A' }]);
             if (error) alert(error.message); else fetchData();
